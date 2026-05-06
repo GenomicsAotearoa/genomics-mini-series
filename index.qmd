@@ -1,0 +1,18 @@
+---
+title: ""
+format: html
+---
+
+
+
+![](figures/GA-Wide-Colour-1200px.jpg)
+
+\
+
+#### These mini-series workshops are designed to teach specific genomic analysis steps, often as part of a larger workflow. 
+
+\
+
+**Contents:**
+
+* [GOseq for non-models](mini-series-gene-ontology.qmd)

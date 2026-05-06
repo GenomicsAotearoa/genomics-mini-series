@@ -1,0 +1,13 @@
+project:
+  type: website
+  output-dir: docs
+website:
+  title: "Genomics mini series"
+  navbar:
+    title: "Genomics mini series"
+    left:
+      - text: "GOseq for non-models"
+        href: mini-series-gene-ontology.qmd
+format:
+  html:
+    theme: default
