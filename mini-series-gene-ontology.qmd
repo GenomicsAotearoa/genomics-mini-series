@@ -7,7 +7,27 @@ format: html
 
 In this mini-workshop, we will cover how to perform gene ontology (GO) analysis for non-model organisms.  Specifially, we will be running through GOseq analysis in R, and show how to perform this when working on organisms that **are not** in the supported organisms package in `goseq()` and don't have an annotation package in Bioconductor. 
 
-This is an extension on our RNA-seq workshop, which runs through GOseq analysis but using a supported organism yeast [RNAseq workshop link here](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html)
+This is an extension on our RNA-seq workshop, which runs through GOseq analysis but using a supported organism *Saccharomyces cerevisiae* [(RNAseq workshop link here)](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html).
+
+### Set-up
+
+1. Install or update [RStudio](https://posit.co/download/rstudio-desktop)
+2. Install or update [R](https://cran.rstudio.com/)
+
+R libraries needed for this workshop:
+```{r}
+#| eval: false
+
+# From CRAN
+install.packages("tidyverse")
+install.packages("BiocManager")
+
+# From Bioconductor
+BiocManager::install("goseq")
+
+library(tidyverse)
+library(goseq)
+```
 
 ## Background
 
@@ -21,25 +41,27 @@ In this scenario, we have already:
 4. Performed differential expression analysis to identify differentially expressed genes (DEGs)   
 5. Have a list of DEGs that we want to understand the biological significance of using gene ontology (GO) analysis.  
 
+![](figures/rnaseq_workflowdiagram_goseqminiseries.png) 
+
 
 ## What is gene ontology (GO) analysis?
-Gene ontology (GO) analysis is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are overrepresented in a given gene list compared to a background set of genes. 
+Gene ontology (GO) analysis is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are enriched in a given gene list. GOseq works by testing which GOs are overrepresented in a gene set compared to a background set of genes. 
 
-## What objects/files do I need to perform GO analysis?
-To perform GO analysis, you typically need the following files or objects in R:  
+## What objects/files do I need to perform GOseq?
+To perform GOseq, you typically need the following files or objects in R:  
 
-1. **DGE list**: A character vector of all the differentially expressed gene (DEGs) IDs. You will need to make two character vectors of DEGs: one for upregulated genes and one for downregulated genes.
+1. **DE gene lists**: Character vectors of all the differentially expressed gene (DEGs) IDs to be tested. For each pairwise comparison, make two character vectors: one for upregulated genes and one for downregulated genes.
 2. **Background genes**: A character vector of the background gene list.   
-3. **Gene ontologies**: A gene annotation file that maps gene identifiers to GO terms.   
-4. **Gene lengths**: A gene length file to account for gene length bias.   
+3. **Gene ontologies**: A dataframe that maps gene identifiers to GO terms.   
+4. **Gene lengths**: A dataframe that maps  gene identifiers to gene lengths.     
 
-The gene IDs used may be a gene symbol or another identifier such as Ensembl ID, but it should be the *same identifier* used in every file or object above, as they need to cross-match. 
+The gene IDs used may be a gene symbol or another identifier such as Ensembl ID, but it should be the *same identifier* used in every file or object above, as they need to cross-match. If you are working outside of R to generate these objects above, save them as either tab delimited text files (for reading into R as a dataframe) or as a plain text file with each gene identifier on a new line (for reading into R as a character vector). 
 
 ### What do each of these objects/files look like?
 
 ... and how do we get them?
 
-#### 1. **DGE list**.
+#### 1. **DE gene lists**.
 
 📌💡 Make **character vectors** of your upregulated gene IDs and downregulated gene IDs, for each pairwise comparison.  
 
@@ -200,9 +222,9 @@ nrow(counts.table)
 
 #### 3. **Gene ontologies**
 
-📌💡 Make either a dataframe or a tab delimited text file that maps gene identifiers to GO terms.
+📌💡 Make either a **dataframe** or a **tab delimited text file** with two columns that maps gene identifiers to GO terms.
 
-This needs to be a dataframe/text file with two columns: gene identifier and GO terms. The gene identifier should match the same identifiers used in the DGE list and background genes. This file should contain every gene in your genome; we filter out the genes we want for analysis later. Multiple GO terms for a single gene are separated by commas and genes with no GO term should have a `.`{style="color:black"} Whether you have a tab delimited text file or a dataframe in R, it should look something like this:
+The gene identifier should match the same identifiers used in the DGE list and background genes. This file should contain every gene in your genome; we filter out the genes we want for analysis later. Multiple GO terms for a single gene are separated by commas and genes with no GO term should have a `.`{style="color:black"} You should have an entry for every gene in your genome (or more specifically, every gene for which reads can be mapped in your RNA-seq alignment *i.e.,* every gene represented in your count matrix). Whether you have a tab delimited text file or a dataframe in R, it should look something like this:
 
 ```
 GeneID	        GOs
@@ -210,12 +232,23 @@ LOC117820358	GO:0046983
 LOC117813751	.
 ccdc51	        .
 tma7	        .
-LOC117815572	GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
-LOC117818779	GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
-LOC117818773	GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
-LOC117832729	GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
+LOC117815572	GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045109
+pusl1           GO:0003723,GO:0003723,GO:0009982,GO:0009982,GO:0031119
+ddx19           GO:0003723,GO:0003724,GO:0003724,GO:0005524,GO:0005634,GO:0010494,GO:0016973
+cdab            GO:0004126,GO:0004126,GO:0005829,GO:0008270,GO:0008270,GO:0009972,GO:0009972
 LOC117818116	GO:0005198,GO:0005198,GO:0045095,GO:0045104
 ...             ...
+```
+
+If your data is a text file, you should read it into R as a dataframe. The first row should be the header. `read_tsv()` from `readr` by default treats the first row as the header.  If you use `read_delim` from `utils` you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).
+
+Example code:
+```{r}
+#| eval: false
+
+geneOntologies <- read_tsv("geneOntologies.txt")
+geneOntologies <- read.delim("geneOntologies.txt", header = TRUE, sep = "\t")
+
 ```
 
 
@@ -227,7 +260,7 @@ LOC117818116	GO:0005198,GO:0005198,GO:0045095,GO:0045104
 
 This will likely come from NCBI's FTP database [https://ftp.ncbi.nlm.nih.gov/](https://ftp.ncbi.nlm.nih.gov/).   
 
-See the Gene Onotology website for more information about getting GO annotations [https://geneontology.org/docs/download-go-annotations/](https://geneontology.org/docs/download-go-annotations/)
+See the Gene Ontology website for more information about getting GO annotations [https://geneontology.org/docs/download-go-annotations/](https://geneontology.org/docs/download-go-annotations/)
 
 The gaf file looks like this. You will need to take the 'Symbol' column and the 'GO_ID' column to make your gene ontology file. You will also need to collapse multiple GO terms for a single gene into a single cell, separated by commas. Genes with no GO term should have a `.`{style="color:black"}
 ![](figures/gos_gaf.png)
@@ -243,9 +276,10 @@ The final gene ontology file should look like this (tsv format):
 
 #### 4. **Gene lengths**  
 
-📌💡 Make either a **dataframe** or **text file** with two columns - gene IDs and lengths (in bp)  
+📌💡 Make either a **dataframe** or **tab delimited text file** with two columns that maps gene identifiers to gene lengths (in bp)  
 
-This may start off as a tab delimited text file or a dataframe with two columns: gene identifier and gene length. The gene identifier should match the identifiers used in the DGE list and background genes. The gene length is in base pairs (bp). Whether you have a tab delimited text file or a dataframe in R, it should look something like this:  
+The gene identifier should match the identifiers used in the DGE list and background genes. The gene length is in base pairs (bp) and should be whole numbers (no decimal places). You should have an entry for every gene in your genome (or more specifically, every gene for which reads can be mapped in your RNA-seq alignment *i.e.,* every gene represented in your count matrix).
+Whether you have a tab delimited text file or a dataframe in R, it should look something like this:  
 
 ```
 GeneID	        Length
@@ -263,6 +297,16 @@ twist3	        6717
 ...             ...
 ```
 
+If your data is a text file, you should read it into R as a dataframe. The first row should be the header. `read_tsv()` from `readr` by default treats the first row as the header.  If you use `read_delim` from `utils` you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).
+
+Example code:
+```{r}
+#| eval: false
+
+geneLengths <- read_tsv("geneLengths.txt")
+geneLengths <- read.delim("geneLengths.txt", header = TRUE, sep = "\t")
+
+```
 
 ::: {.callout-note collapse="true"}
 # How do I get gene lengths?
@@ -327,15 +371,26 @@ saveRDS(geneLengths, file = "data/geneLengths.rds")
 ## Running GOseq analysis
 
 
-First let's load in and orientate ourselves to our objects. We'll pull in example data from our Genomics Aotearoa GitHub.  
+First let's load in and orientate ourselves to our objects. We'll pull in example data from our Genomics Aotearoa GitHub repository.  
 
 ```{r}
-# load in all objects
+#| echo: false
 genes_MT_UP <- read_rds("data/genes_MT_UP.rds")
 genes_MT_DOWN <- read_rds("data/genes_MT_DOWN.rds")
 background <- read_rds("data/background.rds")
 geneLengths <- read_rds("data/geneLengths.rds")
 geneOntologies <- read_rds("data/geneOntologies.rds")
+
+```
+```{r}
+#| eval: false
+
+# load in all objects
+genes_MT_UP <- read_rds("https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/genes_MT_UP.rds")
+genes_MT_DOWN <- read_rds("https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/genes_MT_DOWN.rds")
+background <- read_rds("https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/background.rds")
+geneLengths <- read_rds("https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/geneLengths.rds")
+geneOntologies <- read_rds("https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/geneOntologies.rds")
 
 ```
 

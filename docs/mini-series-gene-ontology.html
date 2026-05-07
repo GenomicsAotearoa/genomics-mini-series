@@ -148,7 +148,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="mini-series-gene-ontology-analysis-for-non-model-organisms" class="level1">
 <h1>Mini series: Gene ontology analysis for non-model organisms</h1>
 <p>In this mini-workshop, we will cover how to perform gene ontology (GO) analysis for non-model organisms. Specifially, we will be running through GOseq analysis in R, and show how to perform this when working on organisms that <strong>are not</strong> in the supported organisms package in <code>goseq()</code> and don’t have an annotation package in Bioconductor.</p>
-<p>This is an extension on our RNA-seq workshop, which runs through GOseq analysis but using a supported organism yeast <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html">RNAseq workshop link here</a></p>
+<p>This is an extension on our RNA-seq workshop, which runs through GOseq analysis but using a supported organism <em>Saccharomyces cerevisiae</em> <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html">(RNAseq workshop link here)</a>.</p>
+<section id="set-up" class="level3">
+<h3 class="anchored" data-anchor-id="set-up">Set-up</h3>
+<ol type="1">
+<li>Install or update <a href="https://posit.co/download/rstudio-desktop">RStudio</a></li>
+<li>Install or update <a href="https://cran.rstudio.com/">R</a></li>
+</ol>
+<p>R libraries needed for this workshop:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From CRAN</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"tidyverse"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"BiocManager"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># From Bioconductor</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">"goseq"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 <section id="background" class="level2">
 <h2 class="anchored" data-anchor-id="background">Background</h2>
 <p>We start off our pipeline at <em>the end of the RNAseq read processing steps</em>, but at <em>the beginning of our gene expression analysis journey</em>. An exciting place to be!</p>
@@ -164,28 +183,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
 <li>Have a list of DEGs that we want to understand the biological significance of using gene ontology (GO) analysis.</li>
 </ol>
+<p><img src="figures/rnaseq_workflowdiagram_goseqminiseries.png" class="img-fluid"></p>
 </section>
 <section id="what-is-gene-ontology-go-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="what-is-gene-ontology-go-analysis">What is gene ontology (GO) analysis?</h2>
-<p>Gene ontology (GO) analysis is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are overrepresented in a given gene list compared to a background set of genes.</p>
+<p>Gene ontology (GO) analysis is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are enriched in a given gene list. GOseq works by testing which GOs are overrepresented in a gene set compared to a background set of genes.</p>
 </section>
-<section id="what-objectsfiles-do-i-need-to-perform-go-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="what-objectsfiles-do-i-need-to-perform-go-analysis">What objects/files do I need to perform GO analysis?</h2>
-<p>To perform GO analysis, you typically need the following files or objects in R:</p>
+<section id="what-objectsfiles-do-i-need-to-perform-goseq" class="level2">
+<h2 class="anchored" data-anchor-id="what-objectsfiles-do-i-need-to-perform-goseq">What objects/files do I need to perform GOseq?</h2>
+<p>To perform GOseq, you typically need the following files or objects in R:</p>
 <ol type="1">
-<li><strong>DGE list</strong>: A character vector of all the differentially expressed gene (DEGs) IDs. You will need to make two character vectors of DEGs: one for upregulated genes and one for downregulated genes.</li>
+<li><strong>DE gene lists</strong>: Character vectors of all the differentially expressed gene (DEGs) IDs to be tested. For each pairwise comparison, make two character vectors: one for upregulated genes and one for downregulated genes.</li>
 <li><strong>Background genes</strong>: A character vector of the background gene list.<br>
 </li>
-<li><strong>Gene ontologies</strong>: A gene annotation file that maps gene identifiers to GO terms.<br>
+<li><strong>Gene ontologies</strong>: A dataframe that maps gene identifiers to GO terms.<br>
 </li>
-<li><strong>Gene lengths</strong>: A gene length file to account for gene length bias.</li>
+<li><strong>Gene lengths</strong>: A dataframe that maps gene identifiers to gene lengths.</li>
 </ol>
-<p>The gene IDs used may be a gene symbol or another identifier such as Ensembl ID, but it should be the <em>same identifier</em> used in every file or object above, as they need to cross-match.</p>
+<p>The gene IDs used may be a gene symbol or another identifier such as Ensembl ID, but it should be the <em>same identifier</em> used in every file or object above, as they need to cross-match. If you are working outside of R to generate these objects above, save them as either tab delimited text files (for reading into R as a dataframe) or as a plain text file with each gene identifier on a new line (for reading into R as a character vector).</p>
 <section id="what-do-each-of-these-objectsfiles-look-like" class="level3">
 <h3 class="anchored" data-anchor-id="what-do-each-of-these-objectsfiles-look-like">What do each of these objects/files look like?</h3>
 <p>… and how do we get them?</p>
-<section id="dge-list." class="level4">
-<h4 class="anchored" data-anchor-id="dge-list.">1. <strong>DGE list</strong>.</h4>
+<section id="de-gene-lists." class="level4">
+<h4 class="anchored" data-anchor-id="de-gene-lists.">1. <strong>DE gene lists</strong>.</h4>
 <p>📌💡 Make <strong>character vectors</strong> of your upregulated gene IDs and downregulated gene IDs, for each pairwise comparison.</p>
 <p>Since we are working in R, you likely will be pulling this data directly from your DGE results <em>e.g.,</em> the <code>dds</code> object created during DESeq2 analysis.</p>
 <p>We are not focussing here on how to run DESeq2, see our RNA-seq data analysis workflow for this.</p>
@@ -203,84 +223,84 @@ Code used to generate dds object
 <div class="callout-body-container callout-body">
 <p>Counts and coldata files not supplied in this workshop.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DESeq2)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># &gt;&gt; DGE-related variables ----</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>COUNTS_FILE <span class="ot">=</span> <span class="st">"data-files/readspergene_v2.matrix"</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>COLDATA_FILE <span class="ot">=</span> <span class="st">"data-files/coldata_v2.3.2.txt"</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Specify significance threshold</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>SIGNIFICANCE_CUTOFF <span class="ot">=</span> <span class="fl">0.001</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># &gt;&gt; Counts file ----</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>counts.table <span class="ot">=</span> <span class="fu">read.table</span>(<span class="at">file=</span>COUNTS_FILE, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="st">"GeneID"</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># &gt;&gt; Coldata file ----</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>coldata.table <span class="ot">=</span> <span class="fu">read.table</span>(<span class="at">file=</span>COLDATA_FILE, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="st">"sample"</span>)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">#factorise</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>coldata.table<span class="sc">$</span>histov22 <span class="ot">&lt;-</span> <span class="fu">factor</span>(coldata.table<span class="sc">$</span>histov22, <span class="at">levels=</span><span class="fu">c</span>(<span class="st">"F"</span>,<span class="st">"ET"</span>,<span class="st">"MT"</span>,<span class="st">"LT"</span>,<span class="st">"TPM"</span>,<span class="st">"IPM"</span>))</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a DESeq2 object for pairwise comparisons</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">DESeqDataSetFromMatrix</span>(<span class="at">countData =</span> counts.table, <span class="at">colData =</span> coldata.table, <span class="at">design =</span> <span class="sc">~</span> histov22 )</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">estimateSizeFactors</span>(dds)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop low count genes</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>nc <span class="ot">&lt;-</span> <span class="fu">counts</span>(dds, <span class="at">normalized=</span><span class="cn">TRUE</span>)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>filter <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(nc <span class="sc">&gt;=</span> <span class="dv">10</span>) <span class="sc">&gt;=</span> <span class="dv">2</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> dds[filter,]</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Run DESeq2</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dds)</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">results</span>(dds, <span class="at">alpha=</span>SIGNIFICANCE_CUTOFF)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> res[<span class="fu">order</span>(res<span class="sc">$</span>padj),]</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(res)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract pairwise comparison results </span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>comparisons <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"histov22_MT_vs_F"</span>)</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialise lists to store results</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>results_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>de_results_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (c <span class="cf">in</span> comparisons)</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>{</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extract relevant details from comparison</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  cSplit <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(c, <span class="st">"_"</span>)</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  contrast <span class="ot">&lt;-</span> cSplit[[<span class="dv">1</span>]][<span class="dv">1</span>]</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>  group1 <span class="ot">&lt;-</span> cSplit[[<span class="dv">1</span>]][<span class="dv">2</span>]</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  group2 <span class="ot">&lt;-</span> cSplit[[<span class="dv">1</span>]][<span class="dv">4</span>]</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Obtain pairwise comparison of interest</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>  res.pw <span class="ot">&lt;-</span> <span class="fu">results</span>(dds, <span class="at">alpha =</span> SIGNIFICANCE_CUTOFF, <span class="at">contrast =</span> <span class="fu">c</span>(contrast, group1, group2))</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clean up</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>  res.pw <span class="ot">&lt;-</span> res.pw[<span class="fu">order</span>(res.pw<span class="sc">$</span>padj), ]</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>  res.pw <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(res.pw)</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Convert to data frame and store full results</span></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>  results_list[[c]] <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(res.pw)</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get DE genes and store</span></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>  de_results_list[[c]] <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(res.pw[res.pw<span class="sc">$</span>padj <span class="sc">&lt;</span> SIGNIFICANCE_CUTOFF, ])</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="co"># pull out into individual named objects - just one for this example!</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>df_MT <span class="ot">&lt;-</span> de_results_list[[<span class="st">"histov22_MT_vs_F"</span>]]</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="co"># split up and down</span></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>dfMT_UP <span class="ot">&lt;-</span> df_MT[df_MT<span class="sc">$</span>log2FoldChange <span class="sc">&gt;</span> <span class="dv">0</span> ,] </span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>dfMT_DOWN <span class="ot">&lt;-</span> df_MT[df_MT<span class="sc">$</span>log2FoldChange <span class="sc">&lt;</span> <span class="dv">0</span> ,]</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="co">#test - should be true</span></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(dfMT_UP) <span class="sc">+</span> <span class="fu">nrow</span>(dfMT_DOWN) <span class="sc">==</span> <span class="fu">nrow</span>(df_MT)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DESeq2)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># &gt;&gt; DGE-related variables ----</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>COUNTS_FILE <span class="ot">=</span> <span class="st">"data-files/readspergene_v2.matrix"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>COLDATA_FILE <span class="ot">=</span> <span class="st">"data-files/coldata_v2.3.2.txt"</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Specify significance threshold</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>SIGNIFICANCE_CUTOFF <span class="ot">=</span> <span class="fl">0.001</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># &gt;&gt; Counts file ----</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>counts.table <span class="ot">=</span> <span class="fu">read.table</span>(<span class="at">file=</span>COUNTS_FILE, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="st">"GeneID"</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># &gt;&gt; Coldata file ----</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>coldata.table <span class="ot">=</span> <span class="fu">read.table</span>(<span class="at">file=</span>COLDATA_FILE, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="st">"sample"</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#factorise</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>coldata.table<span class="sc">$</span>histov22 <span class="ot">&lt;-</span> <span class="fu">factor</span>(coldata.table<span class="sc">$</span>histov22, <span class="at">levels=</span><span class="fu">c</span>(<span class="st">"F"</span>,<span class="st">"ET"</span>,<span class="st">"MT"</span>,<span class="st">"LT"</span>,<span class="st">"TPM"</span>,<span class="st">"IPM"</span>))</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a DESeq2 object for pairwise comparisons</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">DESeqDataSetFromMatrix</span>(<span class="at">countData =</span> counts.table, <span class="at">colData =</span> coldata.table, <span class="at">design =</span> <span class="sc">~</span> histov22 )</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">estimateSizeFactors</span>(dds)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop low count genes</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>nc <span class="ot">&lt;-</span> <span class="fu">counts</span>(dds, <span class="at">normalized=</span><span class="cn">TRUE</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>filter <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(nc <span class="sc">&gt;=</span> <span class="dv">10</span>) <span class="sc">&gt;=</span> <span class="dv">2</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> dds[filter,]</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Run DESeq2</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dds)</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">results</span>(dds, <span class="at">alpha=</span>SIGNIFICANCE_CUTOFF)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> res[<span class="fu">order</span>(res<span class="sc">$</span>padj),]</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(res)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract pairwise comparison results </span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>comparisons <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"histov22_MT_vs_F"</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialise lists to store results</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>results_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>de_results_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (c <span class="cf">in</span> comparisons)</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extract relevant details from comparison</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>  cSplit <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(c, <span class="st">"_"</span>)</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>  contrast <span class="ot">&lt;-</span> cSplit[[<span class="dv">1</span>]][<span class="dv">1</span>]</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>  group1 <span class="ot">&lt;-</span> cSplit[[<span class="dv">1</span>]][<span class="dv">2</span>]</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>  group2 <span class="ot">&lt;-</span> cSplit[[<span class="dv">1</span>]][<span class="dv">4</span>]</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Obtain pairwise comparison of interest</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  res.pw <span class="ot">&lt;-</span> <span class="fu">results</span>(dds, <span class="at">alpha =</span> SIGNIFICANCE_CUTOFF, <span class="at">contrast =</span> <span class="fu">c</span>(contrast, group1, group2))</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clean up</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>  res.pw <span class="ot">&lt;-</span> res.pw[<span class="fu">order</span>(res.pw<span class="sc">$</span>padj), ]</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>  res.pw <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(res.pw)</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Convert to data frame and store full results</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>  results_list[[c]] <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(res.pw)</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get DE genes and store</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  de_results_list[[c]] <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(res.pw[res.pw<span class="sc">$</span>padj <span class="sc">&lt;</span> SIGNIFICANCE_CUTOFF, ])</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># pull out into individual named objects - just one for this example!</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>df_MT <span class="ot">&lt;-</span> de_results_list[[<span class="st">"histov22_MT_vs_F"</span>]]</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># split up and down</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>dfMT_UP <span class="ot">&lt;-</span> df_MT[df_MT<span class="sc">$</span>log2FoldChange <span class="sc">&gt;</span> <span class="dv">0</span> ,] </span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>dfMT_DOWN <span class="ot">&lt;-</span> df_MT[df_MT<span class="sc">$</span>log2FoldChange <span class="sc">&lt;</span> <span class="dv">0</span> ,]</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co">#test - should be true</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(dfMT_UP) <span class="sc">+</span> <span class="fu">nrow</span>(dfMT_DOWN) <span class="sc">==</span> <span class="fu">nrow</span>(df_MT)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># gene list objects as character vectors</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>genes_MT_UP <span class="ot">&lt;-</span> <span class="fu">rownames</span>(dfMT_UP) </span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>genes_MT_DOWN <span class="ot">&lt;-</span> <span class="fu">rownames</span>(dfMT_DOWN)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># gene list objects as character vectors</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>genes_MT_UP <span class="ot">&lt;-</span> <span class="fu">rownames</span>(dfMT_UP) </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>genes_MT_DOWN <span class="ot">&lt;-</span> <span class="fu">rownames</span>(dfMT_DOWN)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -290,11 +310,11 @@ Code used to generate dds object
 <p>In the example below, the two objects we are using are from a pairwise comparison between female (F) gonads and mid-transitioning (MT) gonads from a sex-changing fish species <em>Notolabrus celidotus</em> (New Zealand spotty wrasse).</p>
 <p>The objects should look like this when you run the <code>str()</code> function on them:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(genes_MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(genes_MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> chr [1:6843] "calml4a" "smc1b" "LOC117830393" "gtpbp2a" "LOC117829015" ...</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(genes_MT_DOWN)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(genes_MT_DOWN)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> chr [1:1974] "sh3rf1" "cluha" "nr2f6a" "disp1" "mtus1a" "ddx42" "ciz1a" ...</code></pre>
 </div>
@@ -309,8 +329,8 @@ Code used to generate dds object
 <p>Note: earlier when dds was created, low count genes were filtered out, which removed genes not expressed (<em>i.e.,</em> zero counts across all samples) and genes very lowly expressed (<em>i.e.,</em> less than 10 counts in at least 2 samples).</p>
 </blockquote>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>background <span class="ot">&lt;-</span>  <span class="fu">rownames</span>(dds)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(background)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>background <span class="ot">&lt;-</span>  <span class="fu">rownames</span>(dds)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(background)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> chr [1:22231] "LOC117813751" "ccdc51" "tma7" "LOC117815572" "LOC117818779" ...</code></pre>
 </div>
@@ -330,11 +350,11 @@ Checks and food for thought
 <p>What does <em>expressed</em> really mean in this context? If one of our genes in our dataset had one read mapping to it in one sample, and all other samples had zero, would you consider this an expressed gene? Most of us probably would agree this does not seem sufficient. Deciding on a read count threshold is up to you as a researcher. In this example above, we used a threshold of 10 counts in at least 2 samples. So in this way, our background of expressed genes will be less than the total number of genes in the genome, but more than the number of DE genes.</p>
 <p>We can confirm that there are less genes in the background then there are in the whole list of genes in the genome by running:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(background)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(background)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 22231</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(counts.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(counts.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 28261</code></pre>
 </div>
@@ -345,19 +365,25 @@ Checks and food for thought
 </section>
 <section id="gene-ontologies" class="level4">
 <h4 class="anchored" data-anchor-id="gene-ontologies">3. <strong>Gene ontologies</strong></h4>
-<p>📌💡 Make either a dataframe or a tab delimited text file that maps gene identifiers to GO terms.</p>
-<p>This needs to be a dataframe/text file with two columns: gene identifier and GO terms. The gene identifier should match the same identifiers used in the DGE list and background genes. This file should contain every gene in your genome; we filter out the genes we want for analysis later. Multiple GO terms for a single gene are separated by commas and genes with no GO term should have a <code style="color:black">.</code> Whether you have a tab delimited text file or a dataframe in R, it should look something like this:</p>
+<p>📌💡 Make either a <strong>dataframe</strong> or a <strong>tab delimited text file</strong> with two columns that maps gene identifiers to GO terms.</p>
+<p>The gene identifier should match the same identifiers used in the DGE list and background genes. This file should contain every gene in your genome; we filter out the genes we want for analysis later. Multiple GO terms for a single gene are separated by commas and genes with no GO term should have a <code style="color:black">.</code> You should have an entry for every gene in your genome (or more specifically, every gene for which reads can be mapped in your RNA-seq alignment <em>i.e.,</em> every gene represented in your count matrix). Whether you have a tab delimited text file or a dataframe in R, it should look something like this:</p>
 <pre><code>GeneID          GOs
 LOC117820358    GO:0046983
 LOC117813751    .
 ccdc51          .
 tma7            .
-LOC117815572    GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
-LOC117818779    GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
-LOC117818773    GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
-LOC117832729    GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045095,GO:0045109
+LOC117815572    GO:0005615,GO:0030280,GO:0031424,GO:0045095,GO:0045109
+pusl1           GO:0003723,GO:0003723,GO:0009982,GO:0009982,GO:0031119
+ddx19           GO:0003723,GO:0003724,GO:0003724,GO:0005524,GO:0005634,GO:0010494,GO:0016973
+cdab            GO:0004126,GO:0004126,GO:0005829,GO:0008270,GO:0008270,GO:0009972,GO:0009972
 LOC117818116    GO:0005198,GO:0005198,GO:0045095,GO:0045104
 ...             ...</code></pre>
+<p>If your data is a text file, you should read it into R as a dataframe. The first row should be the header. <code>read_tsv()</code> from <code>readr</code> by default treats the first row as the header. If you use <code>read_delim</code> from <code>utils</code> you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).</p>
+<p>Example code:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>geneOntologies <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="st">"geneOntologies.txt"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>geneOntologies <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="st">"geneOntologies.txt"</span>, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -372,7 +398,7 @@ How do I get gene ontologies?
 <div class="callout-body-container callout-body">
 <p><strong><em>Option 1 (easier):</em></strong> Download the <code>.gaf</code> file from the genome release for your organism and re-arrange into the required format.</p>
 <p>This will likely come from NCBI’s FTP database <a href="https://ftp.ncbi.nlm.nih.gov/">https://ftp.ncbi.nlm.nih.gov/</a>.</p>
-<p>See the Gene Onotology website for more information about getting GO annotations <a href="https://geneontology.org/docs/download-go-annotations/">https://geneontology.org/docs/download-go-annotations/</a></p>
+<p>See the Gene Ontology website for more information about getting GO annotations <a href="https://geneontology.org/docs/download-go-annotations/">https://geneontology.org/docs/download-go-annotations/</a></p>
 <p>The gaf file looks like this. You will need to take the ‘Symbol’ column and the ‘GO_ID’ column to make your gene ontology file. You will also need to collapse multiple GO terms for a single gene into a single cell, separated by commas. Genes with no GO term should have a <code style="color:black">.</code> <img src="figures/gos_gaf.png" class="img-fluid"></p>
 <p>The final gene ontology file should look like this (tsv format): <img src="figures/gos_tsv.png" class="img-fluid"></p>
 <p><strong><em>Option 2 (harder):</em></strong> Derive GOs from BLAST and Pfam annotations. This is more work, but may be necessary if you don’t have a <code>.gaf</code> file available for your organism. You can use tools like <code>InterProScan</code> to annotate your genes with GO terms based on their sequence similarity to known proteins. BLAST2GO is another tool (commercial - need a license) that can be used to assign GO terms to genes based on BLAST results (<em>i.e.,</em> BLASTing against organisms that <em>do</em> have GO annotations, usually from the evolutionarily nearest model organism!). This approach may be more time-consuming and may not yield as comprehensive GO annotations as using a <code>.gaf</code> file, but it can be a useful alternative for non-model organisms. If you generate Pfam annotations through another pipeline (<em>e.g.,</em> through hmmer) you may also need to download the latest <a href="https://current.geneontology.org/ontology/external2go/pfam2go">PFAM2GO mapping file</a> to retrieve GO terms for your genes based on their Pfam domains.</p>
@@ -382,8 +408,8 @@ How do I get gene ontologies?
 </section>
 <section id="gene-lengths" class="level4">
 <h4 class="anchored" data-anchor-id="gene-lengths">4. <strong>Gene lengths</strong></h4>
-<p>📌💡 Make either a <strong>dataframe</strong> or <strong>text file</strong> with two columns - gene IDs and lengths (in bp)</p>
-<p>This may start off as a tab delimited text file or a dataframe with two columns: gene identifier and gene length. The gene identifier should match the identifiers used in the DGE list and background genes. The gene length is in base pairs (bp). Whether you have a tab delimited text file or a dataframe in R, it should look something like this:</p>
+<p>📌💡 Make either a <strong>dataframe</strong> or <strong>tab delimited text file</strong> with two columns that maps gene identifiers to gene lengths (in bp)</p>
+<p>The gene identifier should match the identifiers used in the DGE list and background genes. The gene length is in base pairs (bp) and should be whole numbers (no decimal places). You should have an entry for every gene in your genome (or more specifically, every gene for which reads can be mapped in your RNA-seq alignment <em>i.e.,</em> every gene represented in your count matrix). Whether you have a tab delimited text file or a dataframe in R, it should look something like this:</p>
 <pre><code>GeneID          Length
 LOC117820358    822
 LOC117813751    23247
@@ -397,6 +423,12 @@ LOC117818116    5860
 eif4ba          22986
 twist3          6717
 ...             ...</code></pre>
+<p>If your data is a text file, you should read it into R as a dataframe. The first row should be the header. <code>read_tsv()</code> from <code>readr</code> by default treats the first row as the header. If you use <code>read_delim</code> from <code>utils</code> you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).</p>
+<p>Example code:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>geneLengths <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="st">"geneLengths.txt"</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>geneLengths <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="st">"geneLengths.txt"</span>, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -428,26 +460,26 @@ The code for option 2 this should look something like this:
 <div id="callout-4" class="callout-4-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># generate gene lengths from gtf</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install(c("GenomicRanges", "rtracklayer"))</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GenomicRanges)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rtracklayer)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import only exon features</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>exons <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">"data-files/GCF_009762535.1_fNotCel1.pri_genomic.gtf"</span>, <span class="at">feature.type =</span> <span class="st">"exon"</span>)</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>exons <span class="ot">&lt;-</span> exons[<span class="sc">!</span><span class="fu">is.na</span>(exons<span class="sc">$</span>gene_id)] <span class="co"># optional</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Split by gene, reduce overlapping exons, sum widths</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>exons_reduced <span class="ot">&lt;-</span> GenomicRanges<span class="sc">::</span><span class="fu">reduce</span>(<span class="fu">split</span>(exons, exons<span class="sc">$</span>gene_id))</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>geneLengths <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">GeneID =</span> <span class="fu">names</span>(exons_reduced),</span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">Length =</span> <span class="fu">sapply</span>(exons_reduced, <span class="cf">function</span>(x) <span class="fu">sum</span>(<span class="fu">width</span>(x))),</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="cn">NULL</span></span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(geneLengths)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># generate gene lengths from gtf</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install(c("GenomicRanges", "rtracklayer"))</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GenomicRanges)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rtracklayer)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import only exon features</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>exons <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">"data-files/GCF_009762535.1_fNotCel1.pri_genomic.gtf"</span>, <span class="at">feature.type =</span> <span class="st">"exon"</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>exons <span class="ot">&lt;-</span> exons[<span class="sc">!</span><span class="fu">is.na</span>(exons<span class="sc">$</span>gene_id)] <span class="co"># optional</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Split by gene, reduce overlapping exons, sum widths</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>exons_reduced <span class="ot">&lt;-</span> GenomicRanges<span class="sc">::</span><span class="fu">reduce</span>(<span class="fu">split</span>(exons, exons<span class="sc">$</span>gene_id))</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>geneLengths <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">GeneID =</span> <span class="fu">names</span>(exons_reduced),</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">Length =</span> <span class="fu">sapply</span>(exons_reduced, <span class="cf">function</span>(x) <span class="fu">sum</span>(<span class="fu">width</span>(x))),</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="cn">NULL</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(geneLengths)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        GeneID Length
 1 LOC117804603    280
@@ -470,41 +502,41 @@ The code for option 2 this should look something like this:
 </section>
 <section id="running-goseq-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="running-goseq-analysis">Running GOseq analysis</h2>
-<p>First let’s load in and orientate ourselves to our objects. We’ll pull in example data from our Genomics Aotearoa GitHub.</p>
+<p>First let’s load in and orientate ourselves to our objects. We’ll pull in example data from our Genomics Aotearoa GitHub repository.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load in all objects</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>genes_MT_UP <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/genes_MT_UP.rds"</span>)</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>genes_MT_DOWN <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/genes_MT_DOWN.rds"</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>background <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/background.rds"</span>)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>geneLengths <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/geneLengths.rds"</span>)</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>geneOntologies <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/geneOntologies.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load in all objects</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>genes_MT_UP <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/genes_MT_UP.rds"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>genes_MT_DOWN <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/genes_MT_DOWN.rds"</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>background <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/background.rds"</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>geneLengths <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/geneLengths.rds"</span>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>geneOntologies <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"https://raw.githubusercontent.com/GenomicsAotearoa/genomics-mini-series/main/data/geneOntologies.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Orientate yourself to variables </span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(genes_MT_UP) </span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(genes_MT_DOWN)</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(background)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(geneLengths)</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(geneOntologies)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Orientate yourself to variables </span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(genes_MT_UP) </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(genes_MT_DOWN)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(background)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(geneLengths)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(geneOntologies)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We need to do some pre-analysis processing. First the gene ontologies need to be reformatted into a list.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate GO mapping structure, final object splitgoannot list ----</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>geneOntologies[geneOntologies <span class="sc">==</span> <span class="st">"."</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span> <span class="co">#change all dots to NAs</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>splitgoannot <span class="ot">&lt;-</span>  <span class="fu">strsplit</span>(geneOntologies[,<span class="dv">2</span>], <span class="at">split=</span><span class="st">','</span>)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(splitgoannot) <span class="ot">&lt;-</span>  <span class="fu">as.vector</span>(geneOntologies[,<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate GO mapping structure, final object splitgoannot list ----</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>geneOntologies[geneOntologies <span class="sc">==</span> <span class="st">"."</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span> <span class="co">#change all dots to NAs</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>splitgoannot <span class="ot">&lt;-</span>  <span class="fu">strsplit</span>(geneOntologies[,<span class="dv">2</span>], <span class="at">split=</span><span class="st">','</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(splitgoannot) <span class="ot">&lt;-</span>  <span class="fu">as.vector</span>(geneOntologies[,<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The splitgoannot object is a large list. You can check the structure of it by running <code>str(splitgoannot)</code>. The names of the list are the gene IDs, and the values are vectors of GO terms.</p>
 <p>Next we need to turn our gene lengths into a named vector.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load in gene lengths, final object length.vector is a named vector  ----</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># note - lengths must be whole numbers, use as.integer(round(genelengths$Length)) if you have decimal places.</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>length.vector <span class="ot">&lt;-</span> <span class="fu">setNames</span>(geneLengths<span class="sc">$</span>Length, geneLengths<span class="sc">$</span>GeneID)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(length.vector)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load in gene lengths, final object length.vector is a named vector  ----</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># note - lengths must be whole numbers, use as.integer(round(genelengths$Length)) if you have decimal places.</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>length.vector <span class="ot">&lt;-</span> <span class="fu">setNames</span>(geneLengths<span class="sc">$</span>Length, geneLengths<span class="sc">$</span>GeneID)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(length.vector)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 28261</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(length.vector)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(length.vector)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>LOC117804603 LOC117804604 LOC117804606 LOC117804610 LOC117804611 LOC117804616 
          280         4564         1125         3459         1009         5405 </code></pre>
@@ -512,11 +544,11 @@ The code for option 2 this should look something like this:
 </div>
 <p>We will now cull the length.vector to only contain the genes that are in our background gene list. It is best to start with a length vector that contains all genes in the genome; this way if you decide to change your background gene list later, you won’t have to go back and re-generate the original length vector. If you get errors below (or a FALSE in the test), it may be that there are genes in your background gene list that don’t have a length in the length vector. This could happen if you missed genes from the genome when you generated your original length file and would have to go back and check your work.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cull length.vector that don't show up in the background gene list. </span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>length.vector <span class="ot">&lt;-</span>  length.vector[<span class="fu">names</span>(length.vector) <span class="sc">%in%</span> background]  </span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co">#test - should be TRUE </span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(length.vector) <span class="sc">==</span> <span class="fu">length</span>(background)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cull length.vector that don't show up in the background gene list. </span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>length.vector <span class="ot">&lt;-</span>  length.vector[<span class="fu">names</span>(length.vector) <span class="sc">%in%</span> background]  </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co">#test - should be TRUE </span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(length.vector) <span class="sc">==</span> <span class="fu">length</span>(background)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
@@ -524,64 +556,64 @@ The code for option 2 this should look something like this:
 <p>The last thing we need to do before running GOseq is to generate a named vector of 0s and 1s, where the names are the gene IDs in our background gene list, and the values are 1 if the gene is a DEG and 0 if it is not. We will generate this for both our upregulated and downregulated gene lists.</p>
 <p>We’ll start with the upregulated gene list.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a vector identifying which genes are identified as DE in this analysis</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span> background  <span class="sc">%in%</span>  genes_MT_UP</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="do">## test - should be TRUE</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="do">## sum counts up how many TRUE are in the DE.vector object, and there should be a TRUE in each position where a gene matched the genes listed in genes_MT_UP</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a vector identifying which genes are identified as DE in this analysis</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span> background  <span class="sc">%in%</span>  genes_MT_UP</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="do">## test - should be TRUE</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="do">## sum counts up how many TRUE are in the DE.vector object, and there should be a TRUE in each position where a gene matched the genes listed in genes_MT_UP</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert TRUE to 1 and FALSE to 0</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span>  DE.vector <span class="sc">*</span> <span class="dv">1</span> </span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="do">## turn the DE.vector into a named vector, where the names are the gene IDs in the background gene list.</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(DE.vector) <span class="ot">&lt;-</span>  background</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="do">## test again- should still be TRUE</span></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert TRUE to 1 and FALSE to 0</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span>  DE.vector <span class="sc">*</span> <span class="dv">1</span> </span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="do">## turn the DE.vector into a named vector, where the names are the gene IDs in the background gene list.</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(DE.vector) <span class="ot">&lt;-</span>  background</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="do">## test again- should still be TRUE</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># last test - DE.vector should have the same number of genes as the length.vector now.</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># last test - DE.vector should have the same number of genes as the length.vector now.</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 <p>Now we are ready to run the two step GOseq analysis! in the <code>nullp()</code> function, the object <code>DE.vector</code>, used for the <code>DEgenes</code> argument is the same as we’d have made if we ran this analysis using a supported organism, but the <code>bias.data</code> argument differs here (and we also don’t specify which genome and gene ID type we are using, as we would if we were using a supported organism!). The argument <code>gene2cat</code> in <code>goseq()</code> is where we input our custom gene ontology mapping file, which is also different to how we’d run this if we were using a supported organism.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install("goseq")</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run PWF for length bias correction</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install("goseq")</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run PWF for length bias correction</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in pcls(G): initial point very close to some inequality constraints</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="mini-series-gene-ontology_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="mini-series-gene-ontology_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run GOseq </span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run GOseq </span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="processing-the-goseq-results" class="level3">
 <h3 class="anchored" data-anchor-id="processing-the-goseq-results">Processing the GOseq results</h3>
 <p>The go_output object is a dataframe that contains all the GO terms that were tested, but is not filtered to only show significant results. The columns <code>over_represented_pvalue</code> and <code>under_represented_pvalue</code> contain the p-values for over-representation and under-representation of each GO term, respectively. We can filter the go_output dataframe to only show significant results based on a chosen significance threshold.</p>
 <p>In this specific example, we were investigating genes upregulated in mid-transitioning (MT) gonads compared to female gonads (F) and so our output file names reflect this.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Limit output to significant results</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>GOSEQ_SIGNIFICANCE_THRESHOLD <span class="ot">=</span> <span class="fl">0.05</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Limit output to significant results</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>GOSEQ_SIGNIFICANCE_THRESHOLD <span class="ot">=</span> <span class="fl">0.05</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_UP_vs_F_goseq.tsv"</span>)</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_UP, <span class="at">file=</span><span class="st">"MT_UP_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_UP_vs_F_goseq.tsv"</span>)</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_UP, <span class="at">file=</span><span class="st">"MT_UP_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We have run through GOseq now for one comparison, which is MT UP vs F, but we havent looked at genes downregulated in MT (MT DOWN vs F).</p>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -605,42 +637,42 @@ Run through the pipeline again for MT DOWN vs F
 <strong>remake</strong> go_output</p>
 <p>Let’s remove those to be sure we re-create them with our new data!</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(DE.vector)</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(data.pwf)</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(go_output)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(DE.vector)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(data.pwf)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(go_output)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Run through pipeline again with MT_DOWN</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span> background  <span class="sc">%in%</span>  genes_MT_DOWN</span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span> background  <span class="sc">%in%</span>  genes_MT_DOWN</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span>  DE.vector <span class="sc">*</span> <span class="dv">1</span> </span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(DE.vector) <span class="ot">&lt;-</span>  background</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test again- should still be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span>  DE.vector <span class="sc">*</span> <span class="dv">1</span> </span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(DE.vector) <span class="ot">&lt;-</span>  background</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test again- should still be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="mini-series-gene-ontology_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="mini-series-gene-ontology_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_DOWN <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_DOWN <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_goseq.tsv"</span>)</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_DOWN, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_goseq.tsv"</span>)</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_DOWN, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -663,49 +695,49 @@ Run through the pipeline again for MT DOWN vs F
 <p>We’re going to need a new column Gene Ratio for plotting later, so we will generate that now before we split the data into over and under-represented. The Gene Ratio is the number of DE genes in the GO term divided by the total number of genes in that GO term. This is the proportion of DE genes with that GO term <em>e.g.,</em> a Gene ratio of 0.5 means that 50% of the genes in that GO term are DE.</p>
 <p>For today, we’ll do this for upregulated genes only.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span> go_output.SIG.MT_UP <span class="sc">%&gt;%</span></span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GeneRatio =</span> numDEInCat <span class="sc">/</span> numInCat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span> go_output.SIG.MT_UP <span class="sc">%&gt;%</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GeneRatio =</span> numDEInCat <span class="sc">/</span> numInCat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Split into over and under-represented GO terms for upregulated genes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over  <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>over_represented_pvalue  <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_under <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over  <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>over_represented_pvalue  <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_under <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test - should be TRUE</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over) <span class="sc">+</span> <span class="fu">nrow</span>(goout_MT_UP_under) <span class="sc">==</span> <span class="fu">nrow</span>(go_output.SIG.MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test - should be TRUE</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over) <span class="sc">+</span> <span class="fu">nrow</span>(goout_MT_UP_under) <span class="sc">==</span> <span class="fu">nrow</span>(go_output.SIG.MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 <p>There are often less under-represented GO terms than over-represented; we can check how many GOs are in each df with:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over)</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_under)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over)</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_under)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="plot-data" class="level3">
 <h3 class="anchored" data-anchor-id="plot-data">Plot data</h3>
 <p>Lastly, let’s plot the top 5 over-represented GO terms for upregulated genes in MT vs F. We will use the GeneRatio column we generated above for the y-axis, and we will colour the bars by the -log10 of the p-value, which is a common way to visualise p-values in GO analysis. Using a negative log scales very small p-values (most significant) and larger pvalues on a visually more manageable scale, and also means that the bigger the number the more signinficant (here, small p-values become higher numbers and are coloured red).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over <span class="sc">%&gt;%</span> </span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(ontology)) <span class="sc">%&gt;%</span> <span class="co"># filter out any NAs</span></span>
-<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(over_represented_pvalue, <span class="at">n=</span><span class="dv">5</span>) <span class="sc">%&gt;%</span> <span class="co">#top N by pvalue eg top 10 or 20. Note slice_min = smallest pvalue, slice_max = largest pvalue</span></span>
-<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(<span class="fu">str_wrap</span>(term, <span class="at">width =</span> <span class="dv">18</span>), GeneRatio), </span>
-<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> GeneRatio, <span class="at">fill =</span> <span class="sc">-</span><span class="fu">log10</span>(over_represented_pvalue))) <span class="sc">+</span></span>
-<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
-<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"blue"</span>, <span class="at">high =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span> <span class="co"># Removes extra padding</span></span>
-<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Top 5 overrepresented GO terms in genes upregulated in MT, vs F"</span>,<span class="at">x =</span> <span class="st">"GO Term"</span>, <span class="at">y =</span> <span class="st">"GeneRatio"</span>, <span class="at">fill =</span> <span class="st">"-log10(p-value)"</span>) <span class="sc">+</span> </span>
-<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over <span class="sc">%&gt;%</span> </span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(ontology)) <span class="sc">%&gt;%</span> <span class="co"># filter out any NAs</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(over_represented_pvalue, <span class="at">n=</span><span class="dv">5</span>) <span class="sc">%&gt;%</span> <span class="co">#top N by pvalue eg top 10 or 20. Note slice_min = smallest pvalue, slice_max = largest pvalue</span></span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(<span class="fu">str_wrap</span>(term, <span class="at">width =</span> <span class="dv">18</span>), GeneRatio), </span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> GeneRatio, <span class="at">fill =</span> <span class="sc">-</span><span class="fu">log10</span>(over_represented_pvalue))) <span class="sc">+</span></span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"blue"</span>, <span class="at">high =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span> <span class="co"># Removes extra padding</span></span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Top 5 overrepresented GO terms in genes upregulated in MT, vs F"</span>,<span class="at">x =</span> <span class="st">"GO Term"</span>, <span class="at">y =</span> <span class="st">"GeneRatio"</span>, <span class="at">fill =</span> <span class="st">"-log10(p-value)"</span>) <span class="sc">+</span> </span>
+<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="mini-series-gene-ontology_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="mini-series-gene-ontology_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
