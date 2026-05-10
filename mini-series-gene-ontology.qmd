@@ -5,9 +5,9 @@ format: html
 
 # Mini series: Gene ontology analysis for non-model organisms
 
-In this mini-workshop, we will cover how to perform gene ontology (GO) analysis for non-model organisms.  Specifially, we will be running through GOseq analysis in R, and show how to perform this when working on organisms that **are not** in the supported organisms package in `goseq()` and don't have an annotation package in Bioconductor. 
+In this workshop, we will cover how to perform gene ontology (GO) analysis for non-model organisms.  Specifically, we will run through GOseq analysis in R, focusing on how to perform this for organisms that **are not** in the supported organisms list in `goseq()` and don't have an annotation package in Bioconductor. 
 
-This is an extension on our RNA-seq workshop, which runs through GOseq analysis but using a supported organism *Saccharomyces cerevisiae* [(RNAseq workshop link here)](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html).
+This is an extension on our RNA-seq workshop, which covers GOseq analysis using the supported organism *Saccharomyces cerevisiae* [(RNAseq workshop link here)](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html).
 
 ### Set-up
 
@@ -591,7 +591,7 @@ nrow(goout_MT_UP_under)
 
 ### Plot data
 
-Lastly, let's plot the top 5 over-represented GO terms for upregulated genes in MT vs F. We will use the GeneRatio column we generated above for the y-axis, and we will colour the bars by the -log10 of the p-value, which is a common way to visualise p-values in GO analysis. Using a negative log scales very small p-values (most significant) and larger pvalues on a visually more manageable scale, and also means that the bigger the number the more signinficant (here, small p-values become higher numbers and are coloured red). 
+Lastly, let's plot the top 5 over-represented GO terms for upregulated genes in MT vs F. We will use the GeneRatio column we generated above for the y-axis, and we will colour the bars by the -log10 of the p-value, which is a common way to visualise p-values in GO analysis. Using a negative log scales very small p-values (most significant) and larger pvalues on a visually more manageable scale, and also means that the bigger the number the more significant (here, small p-values become higher numbers and are coloured red). 
 
 ```{r}
 library(ggplot2)

@@ -5,11 +5,11 @@ format: html
 
 
 
-![](figures/GA-Wide-Colour-1200px.jpg)
+![](figures/GA-Logo-Bioinformatics-Training-black.png)
 
 \
 
-#### These mini-series workshops are designed to teach specific genomic analysis steps, often as part of a larger workflow. 
+#### These mini-series workshops are designed to teach specific genomic analysis steps in depth and build on skills and analyses covered in the core genomic workflows. 
 
 \
 

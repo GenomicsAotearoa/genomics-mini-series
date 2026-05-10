@@ -1,8 +1,10 @@
 project:
   type: website
   output-dir: docs
+
 website:
   title: "Genomics mini series"
+  favicon: figures/GA-image-black-favicon.png
   navbar:
     title: "Genomics mini series"
     left:
@@ -10,4 +12,6 @@ website:
         href: mini-series-gene-ontology.qmd
 format:
   html:
-    theme: default
+    theme:
+      light: default
+      dark: darkly
