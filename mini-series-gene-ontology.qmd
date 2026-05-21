@@ -564,7 +564,7 @@ For today, we'll do this for upregulated genes only.
 ```{r}
 library(dplyr)
 
-go_output.SIG.MT_UP <- go_output.SIG.MT_UP %>%
+go_output.SIG.MT_UP <- go_output.SIG.MT_UP |>
   mutate(GeneRatio = numDEInCat / numInCat)
 
 ```
@@ -591,19 +591,133 @@ nrow(goout_MT_UP_under)
 
 ### Plot data
 
-Lastly, let's plot the top 5 over-represented GO terms for upregulated genes in MT vs F. We will use the GeneRatio column we generated above for the y-axis, and we will colour the bars by the -log10 of the p-value, which is a common way to visualise p-values in GO analysis. Using a negative log scales very small p-values (most significant) and larger pvalues on a visually more manageable scale, and also means that the bigger the number the more significant (here, small p-values become higher numbers and are coloured red). 
+Lastly, let's create a bubble plot to represent the top 10 over-represented GO terms for upregulated genes in MT vs F. We will use the GeneRatio column we generated above for the x-axis, and we will colour the bubbles by the -log10 of the p-value, which is a common way to visualise p-values in GO analysis. Using a negative log scales very small p-values (most significant) and larger pvalues on a visually more manageable scale, and means that the bigger the number the more significant (here, small p-values become higher numbers and are coloured red). We'll also scale the size of the bubbles by the number of DE genes in that GO term, so that GO terms with more DE genes are larger bubbles.
+
+
+
+```{r}
+
+goout_MT_UP_over |>
+  filter(!is.na(ontology)) |>
+  slice_min(over_represented_pvalue, n = 10) |>
+  ggplot(aes(x = GeneRatio,
+             y = reorder(str_wrap(term, width = 35), GeneRatio),
+             size = numDEInCat,
+             colour = -log10(over_represented_pvalue))) +
+  geom_point() +
+  scale_colour_gradient(low = "steelblue", high = "firebrick",
+                        name = "-log10(p-value)") +
+  scale_size_continuous(name = "DE gene count", range = c(2, 10)) +
+  labs(title = "Over-represented GO terms for upregulated genes in MT, vs F",
+       x = "Gene Ratio", y = NULL) +
+  theme_bw()
+```
+
+
+
+
+#### Further plots, next steps and other analyses
+
+
+There are many other plots you can generate with GO terms.
+
+::: {.callout-tip collapse="true"}
+# Another simpler option is a barplot:
 
 ```{r}
 library(ggplot2)
-goout_MT_UP_over %>% 
-  filter(!is.na(ontology)) %>% # filter out any NAs
-  slice_min(over_represented_pvalue, n=5) %>% #top N by pvalue eg top 10 or 20. Note slice_min = smallest pvalue, slice_max = largest pvalue
+goout_MT_UP_over |> 
+  filter(!is.na(ontology)) |> 
+  slice_min(over_represented_pvalue, n=5) |> #top N by pvalue eg top 10 or 20. Note slice_min = smallest pvalue, slice_max = largest pvalue
   ggplot(aes(x = reorder(str_wrap(term, width = 18), GeneRatio), 
              y = GeneRatio, fill = -log10(over_represented_pvalue))) +
   geom_bar(stat = "identity") +
   coord_flip() +
-  scale_fill_gradient(low = "blue", high = "red") +
+  scale_fill_gradient(low = "steelblue", high = "firebrick") +
   scale_y_continuous(expand = c(0, 0)) + # Removes extra padding
-  labs(title="Top 5 overrepresented GO terms in genes upregulated in MT, vs F",x = "GO Term", y = "GeneRatio", fill = "-log10(p-value)") + 
+  labs(title="Over-represented GO terms for genes upregulated in MT, vs F",x = "GO Term", y = "GeneRatio", fill = "-log10(p-value)") + 
   theme_classic()
 ```
+
+
+:::
+
+The clusterProfiler package is a great tool for exploring GO terms too. You will likely need to do some minimal data manipulation/reformatting of the objects we made today to work with clusterProfiler, as shown in the example below. 
+
+
+::: {.callout-tip collapse="true"}
+# Example GO enrichment map plot  
+
+```{r}
+#| message: false
+
+# BiocManager::install(c("clusterProfiler", "enrichplot", "GO.db"))
+library(clusterProfiler)
+library(enrichplot)
+
+
+# Step 1: reformat your geneOntologies into long format 
+# clusterProfiler's enricher() needs a two-column dataframe:
+#   col 1 = GO term  (TERM2GENE format: term first, gene second)
+#   col 2 = gene ID
+# You already have geneOntologies loaded (GeneID | GOs), so we just
+# split the comma-separated GOs and pivot to long format.
+
+term2gene <- geneOntologies |>
+  filter(GOs != ".") |>                          # drop genes with no annotation
+  separate_rows(GOs, sep = ",") |>               # one row per GO term
+  mutate(GOs = trimws(GOs)) |>                   # tidy any whitespace
+  select(GOs, Symbol)                             # term first, gene second
+# (enricher expects TERM2GENE with term in col 1, gene in col 2)
+
+head(term2gene)
+
+# Step 2: download and generate term2name variable 
+# We need the GO term and the name e.g., GO:0000001 and 'mitochondrion inheritance' for plotting
+library(GO.db)
+
+term2name <- AnnotationDbi::select(GO.db, keys = keys(GO.db), columns = c("GOID", "TERM"))
+term2name <- dplyr::select(term2name, GOID, TERM) 
+
+head(term2name)
+
+# Step 3: run enricher() 
+# universe = your background gene list (same as goseq)
+# gene     = your DE gene list (same as goseq)
+
+
+cp_result <- enricher(
+  gene          = genes_MT_UP,
+  universe      = background,
+  TERM2GENE     = term2gene,
+  TERM2NAME     = term2name,
+  pvalueCutoff  = 0.05,
+  qvalueCutoff  = 0.05,
+  pAdjustMethod = "BH"
+)
+
+
+
+# Step 4: calculate semantic similarity
+# emapplot requires the pairwise similarity between terms to be calculated first. This creates a similarity matrix. 
+cp_result_sim <- pairwise_termsim(cp_result)
+
+
+# Step5: Visualisation
+emapplot(cp_result_sim, 
+         showCategory = 30,         # change how many GOs on plot
+         size_category = 1,         # change size of bubbles
+         node_label_size = 3,       # change GO font size
+         ) +    
+  labs(title = "GO term enrichment map: upregulated genes in MT, vs F")
+```
+
+:::
+
+
+See the link here for [further plotting examples using `clusterProfiler`](https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html). You may also want to read more about semantic similarity (*e.g.,* [GOSemSim](https://bioconductor.org/packages/release/bioc/html/GOSemSim.html) package). 
+
+Other analyses you may want to consider is KEGG pathways (example [enrichment analysis here](https://yulab-smu.top/biomedical-knowledge-mining-book/022-kegg.html)) and weighted gene co-expression network analysis (*i.e.,* WGCNA. [Paper here.](https://link.springer.com/article/10.1186/1471-2105-9-559)). Both can be integrated with or utilise GOseq tools.   
+
+If you really want to use tools designed for supported organisms, it is possible, but not trivial, to make a custom OrgDb for your organism, using one of two available functions from the `AnnotationForge` package `makeOrgPackage()` or `makeOrgPackageFromNCBI()`
+
