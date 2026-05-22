@@ -318,6 +318,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1>Mini series: Gene ontology analysis for non-model organisms</h1>
 <p>In this workshop, we will cover how to perform gene ontology (GO) analysis for non-model organisms. Specifically, we will run through GOseq analysis in R, focusing on how to perform this for organisms that <strong>are not</strong> in the supported organisms list in <code>goseq()</code> and don’t have an annotation package in Bioconductor.</p>
 <p>This is an extension on our RNA-seq workshop, which covers GOseq analysis using the supported organism <em>Saccharomyces cerevisiae</em> <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html">(RNAseq workshop link here)</a>.</p>
+<section id="prerequisites" class="level2">
+<h2 class="anchored" data-anchor-id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Have attended our <a href="https://genomicsaotearoa.github.io/Introduction-to-R/">Introduction to R</a> workshop or have equivalent experience.<br>
+</li>
+<li>Have attended our <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/">RNA-seq Data Analysis</a> workshop, or have previous experience with an RNA-seq workflow.</li>
+</ul>
 <section id="set-up" class="level3">
 <h3 class="anchored" data-anchor-id="set-up">Set-up</h3>
 <ol type="1">
@@ -333,9 +340,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># From Bioconductor</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">"goseq"</span>)</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Load libraries</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
 </section>
 <section id="background" class="level2">
 <h2 class="anchored" data-anchor-id="background">Background</h2>
@@ -354,9 +363,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ol>
 <p><img src="figures/rnaseq_workflowdiagram_goseqminiseries.png" class="img-fluid"></p>
 </section>
-<section id="what-is-gene-ontology-go-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="what-is-gene-ontology-go-analysis">What is gene ontology (GO) analysis?</h2>
-<p>Gene ontology (GO) analysis is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are enriched in a given gene list. GOseq works by testing which GOs are overrepresented in a gene set compared to a background set of genes.</p>
+<section id="what-are-gene-ontologies-go-and-what-is-go-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="what-are-gene-ontologies-go-and-what-is-go-analysis">What are gene ontologies (GO) and what is GO analysis?</h2>
+<p>Gene ontologies are a structured and standardised representation of biological knowledge. The GO is designed to be species-agnostic to enable the annotation of gene products across the entire tree of life. GOs are organised in three aspects: Molecular Function (MF), Cellular Component (CC), and Biological Process (BP). Read more about GOs on the <a href="https://geneontology.org/docs/ontology-documentation/">geneontology.org website</a>.</p>
+<p>GOseq analysis (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2872874/">paper here</a>) is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are enriched in a given gene list. GOseq works by testing which GOs are overrepresented in a gene set compared to a background set of genes. GOseq is one type of overrepresentation analysis tool, but there are other tools such as <a href="https://www.pnas.org/doi/10.1073/pnas.0506580102">GSEA</a> which use a different statistical approach <em>i.e.,</em> functional class sorting, rather than the hypergeometric testing done in GOseq. There are pros and cons to every approach.</p>
 </section>
 <section id="what-objectsfiles-do-i-need-to-perform-goseq" class="level2">
 <h2 class="anchored" data-anchor-id="what-objectsfiles-do-i-need-to-perform-goseq">What objects/files do I need to perform GOseq?</h2>
@@ -493,7 +503,7 @@ Code used to generate dds object
 <h4 class="anchored" data-anchor-id="background-genes">2. <strong>Background genes</strong>:</h4>
 <p>📌💡 Make a <strong>character vector</strong> of all gene IDs that you want to use as a background for your GO analysis.</p>
 <p>You need to think carefully about what you want to use as your background gene list. Generating it is fairly straight forward, but it has implications for the analysis. Read more on how overrepresentation analysis works and how the background gene list is used in the analysis <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html">here in the functional analysis section of the RNA-seq workshop</a>.</p>
-<p>For now, we will use all genes that are expressed in our dataset as the background. We will take these gene IDs by pulling the all the rownames out of the <code>dds</code> object:</p>
+<p>For now, we will use all genes that are expressed in our dataset as the background. We will take these gene IDs by pulling all the rownames out of the <code>dds</code> object:</p>
 <blockquote class="blockquote">
 <p>Note: earlier when dds was created, low count genes were filtered out, which removed genes not expressed (<em>i.e.,</em> zero counts across all samples) and genes very lowly expressed (<em>i.e.,</em> less than 10 counts in at least 2 samples).</p>
 </blockquote>
@@ -913,16 +923,16 @@ Run through the pipeline again for MT DOWN vs F
 </div>
 </div>
 </div>
-<section id="further-plots-next-steps-and-other-analyses" class="level4">
-<h4 class="anchored" data-anchor-id="further-plots-next-steps-and-other-analyses">Further plots, next steps and other analyses</h4>
-<p>There are many other plots you can generate with GO terms.</p>
+<section id="further-plots-next-steps-and-additional-resources" class="level4">
+<h4 class="anchored" data-anchor-id="further-plots-next-steps-and-additional-resources">Further plots, next steps and additional resources</h4>
+<p>There are many other plots you can generate with GO terms. Another simpler option with the objects/data we already have is a barplot of overrepresented GOs vs GeneRatio, in the callout below.</p>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Another simpler option is a barplot:
+Example barplot of GOs vs GeneRatio
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
@@ -952,7 +962,7 @@ Another simpler option is a barplot:
 </div>
 </div>
 </div>
-<p>The clusterProfiler package is a great tool for exploring GO terms too. You will likely need to do some minimal data manipulation/reformatting of the objects we made today to work with clusterProfiler, as shown in the example below.</p>
+<p>The <code>clusterProfiler</code> package is a great tool for exploring and plotting GO terms too. You will likely need to do some minimal data manipulation/reformatting of the objects we made today to work with clusterProfiler, as shown in the example below. Check out <a href="https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html">this guide here</a> on different ways to visualise results.</p>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -1054,11 +1064,26 @@ Example GO enrichment map plot
 </div>
 </div>
 </div>
-<p>See the link here for <a href="https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html">further plotting examples using <code>clusterProfiler</code></a>. You may also want to read more about semantic similarity (<em>e.g.,</em> <a href="https://bioconductor.org/packages/release/bioc/html/GOSemSim.html">GOSemSim</a> package).</p>
-<p>Other analyses you may want to consider is KEGG pathways (example <a href="https://yulab-smu.top/biomedical-knowledge-mining-book/022-kegg.html">enrichment analysis here</a>) and weighted gene co-expression network analysis (<em>i.e.,</em> WGCNA. <a href="https://link.springer.com/article/10.1186/1471-2105-9-559">Paper here.</a>). Both can be integrated with or utilise GOseq tools.</p>
-<p>If you really want to use tools designed for supported organisms, it is possible, but not trivial, to make a custom OrgDb for your organism, using one of two available functions from the <code>AnnotationForge</code> package <code>makeOrgPackage()</code> or <code>makeOrgPackageFromNCBI()</code></p>
+<section id="next-steps" class="level5">
+<h5 class="anchored" data-anchor-id="next-steps">Next steps 📈</h5>
+<p>Other analyses you may want to consider is investigating KEGG pathways (example <a href="https://yulab-smu.top/biomedical-knowledge-mining-book/022-kegg.html">KEGG enrichment analysis workflow here</a>) and weighted gene co-expression network analysis (<em>i.e.,</em> WGCNA. <a href="https://link.springer.com/article/10.1186/1471-2105-9-559">Paper here.</a>). Both can be integrated with or utilise GOseq tools. KEGG ontology terms can be used in place of GO terms to perform overrepresentation analysis using the <code>goseq()</code> function. WGCNA can identify lists of genes that co-expressed, and that list can then be used as your input gene list in place of your DGE list for GOseq analysis.</p>
+<p>If you really want to use tools designed for supported organisms, it is possible, but not trivial, to make a custom OrgDb for your organism, using one of two available functions from the <a href="https://www.bioconductor.org/packages/release/bioc/html/AnnotationForge.html"><code>AnnotationForge</code></a> package <code>makeOrgPackage()</code> or <code>makeOrgPackageFromNCBI()</code></p>
+</section>
+<section id="additional-resources" class="level5">
+<h5 class="anchored" data-anchor-id="additional-resources">Additional resources 📚</h5>
+<ul>
+<li><a href="https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html">Functional Analysis for RNA-seq by HBC training</a><br>
+</li>
+<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2872874/">GOseq paper</a><br>
+</li>
+<li><a href="https://www.pnas.org/doi/10.1073/pnas.0506580102">GSEA paper</a><br>
+</li>
+<li><a href="https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html">Further plotting examples using <code>clusterProfiler</code></a>.</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/GOSemSim.html">GOSemSim</a> package for semantic similarity computation.</li>
+</ul>
 
 
+</section>
 </section>
 </section>
 </section>

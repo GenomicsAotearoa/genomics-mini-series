@@ -9,6 +9,12 @@ In this workshop, we will cover how to perform gene ontology (GO) analysis for n
 
 This is an extension on our RNA-seq workshop, which covers GOseq analysis using the supported organism *Saccharomyces cerevisiae* [(RNAseq workshop link here)](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html).
 
+## Prerequisites
+
+- Have attended our [Introduction to R](https://genomicsaotearoa.github.io/Introduction-to-R/) workshop or have equivalent experience.   
+- Have attended our [RNA-seq Data Analysis](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/) workshop, or have previous experience with an RNA-seq workflow.     
+
+
 ### Set-up
 
 1. Install or update [RStudio](https://posit.co/download/rstudio-desktop)
@@ -25,6 +31,7 @@ install.packages("BiocManager")
 # From Bioconductor
 BiocManager::install("goseq")
 
+# Load libraries
 library(tidyverse)
 library(goseq)
 ```
@@ -44,8 +51,10 @@ In this scenario, we have already:
 ![](figures/rnaseq_workflowdiagram_goseqminiseries.png) 
 
 
-## What is gene ontology (GO) analysis?
-Gene ontology (GO) analysis is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are enriched in a given gene list. GOseq works by testing which GOs are overrepresented in a gene set compared to a background set of genes. 
+## What are gene ontologies (GO) and what is GO analysis?
+Gene ontologies are a structured and standardised representation of biological knowledge. The GO is designed to be species-agnostic to enable the annotation of gene products across the entire tree of life. GOs are organised in three aspects: Molecular Function (MF), Cellular Component (CC), and Biological Process (BP). Read more about GOs on the [geneontology.org website](https://geneontology.org/docs/ontology-documentation/). 
+
+GOseq analysis ([paper here](https://pmc.ncbi.nlm.nih.gov/articles/PMC2872874/)) is a powerful tool used to understand the biological significance of a list of genes, such as differentially expressed genes (DEGs) from an RNA-seq experiment. GO analysis helps to identify which biological processes, cellular components, or molecular functions are enriched in a given gene list. GOseq works by testing which GOs are overrepresented in a gene set compared to a background set of genes. GOseq is one type of overrepresentation analysis tool, but there are other tools such as [GSEA](https://www.pnas.org/doi/10.1073/pnas.0506580102) which use a different statistical approach *i.e.,* functional class sorting, rather than the hypergeometric testing done in GOseq. There are pros and cons to every approach.      
 
 ## What objects/files do I need to perform GOseq?
 To perform GOseq, you typically need the following files or objects in R:  
@@ -185,7 +194,7 @@ str(genes_MT_DOWN)
 
 You need to think carefully about what you want to use as your background gene list. Generating it is fairly straight forward, but it has implications for the analysis. Read more on how overrepresentation analysis works and how the background gene list is used in the analysis [here in the functional analysis section of the RNA-seq workshop](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html). 
 
-For now, we will use all genes that are expressed in our dataset as the background. We will take these gene IDs by pulling the all the rownames out of the `dds` object:
+For now, we will use all genes that are expressed in our dataset as the background. We will take these gene IDs by pulling all the rownames out of the `dds` object:
 
 > Note: earlier when dds was created, low count genes were filtered out, which removed genes not expressed (*i.e.,* zero counts across all samples) and genes very lowly expressed (*i.e.,* less than 10 counts in at least 2 samples).
 
@@ -616,13 +625,13 @@ goout_MT_UP_over |>
 
 
 
-#### Further plots, next steps and other analyses
+#### Further plots, next steps and additional resources  
 
 
-There are many other plots you can generate with GO terms.
+There are many other plots you can generate with GO terms. Another simpler option with the objects/data we already have is a barplot of overrepresented GOs vs GeneRatio, in the callout below.  
 
 ::: {.callout-tip collapse="true"}
-# Another simpler option is a barplot:
+# Example barplot of GOs vs GeneRatio
 
 ```{r}
 library(ggplot2)
@@ -642,7 +651,7 @@ goout_MT_UP_over |>
 
 :::
 
-The clusterProfiler package is a great tool for exploring GO terms too. You will likely need to do some minimal data manipulation/reformatting of the objects we made today to work with clusterProfiler, as shown in the example below. 
+The `clusterProfiler` package is a great tool for exploring and plotting GO terms too. You will likely need to do some minimal data manipulation/reformatting of the objects we made today to work with clusterProfiler, as shown in the example below. Check out [this guide here](https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html) on different ways to visualise results. 
 
 
 ::: {.callout-tip collapse="true"}
@@ -715,9 +724,18 @@ emapplot(cp_result_sim,
 :::
 
 
-See the link here for [further plotting examples using `clusterProfiler`](https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html). You may also want to read more about semantic similarity (*e.g.,* [GOSemSim](https://bioconductor.org/packages/release/bioc/html/GOSemSim.html) package). 
 
-Other analyses you may want to consider is KEGG pathways (example [enrichment analysis here](https://yulab-smu.top/biomedical-knowledge-mining-book/022-kegg.html)) and weighted gene co-expression network analysis (*i.e.,* WGCNA. [Paper here.](https://link.springer.com/article/10.1186/1471-2105-9-559)). Both can be integrated with or utilise GOseq tools.   
+##### Next steps 📈
 
-If you really want to use tools designed for supported organisms, it is possible, but not trivial, to make a custom OrgDb for your organism, using one of two available functions from the `AnnotationForge` package `makeOrgPackage()` or `makeOrgPackageFromNCBI()`
+Other analyses you may want to consider is investigating KEGG pathways (example [KEGG enrichment analysis workflow here](https://yulab-smu.top/biomedical-knowledge-mining-book/022-kegg.html)) and weighted gene co-expression network analysis (*i.e.,* WGCNA. [Paper here.](https://link.springer.com/article/10.1186/1471-2105-9-559)). Both can be integrated with or utilise GOseq tools. KEGG ontology terms can be used in place of GO terms to perform overrepresentation analysis using the `goseq()` function. WGCNA can identify lists of genes that co-expressed, and that list can then be used as your input gene list in place of your DGE list for GOseq analysis.    
+
+If you really want to use tools designed for supported organisms, it is possible, but not trivial, to make a custom OrgDb for your organism, using one of two available functions from the [`AnnotationForge`](https://www.bioconductor.org/packages/release/bioc/html/AnnotationForge.html) package `makeOrgPackage()` or `makeOrgPackageFromNCBI()`
+
+##### Additional resources 📚
+
+- [Functional Analysis for RNA-seq by HBC training](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html)   
+- [GOseq paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC2872874/)  
+- [GSEA paper](https://www.pnas.org/doi/10.1073/pnas.0506580102)  
+- [Further plotting examples using `clusterProfiler`](https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html). 
+- [GOSemSim](https://bioconductor.org/packages/release/bioc/html/GOSemSim.html) package for semantic similarity computation.    
 
