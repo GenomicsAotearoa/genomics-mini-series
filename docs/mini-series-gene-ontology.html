@@ -316,14 +316,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="mini-series-gene-ontology-analysis-for-non-model-organisms" class="level1">
 <h1>Mini series: Gene ontology analysis for non-model organisms</h1>
-<p>In this workshop, we will cover how to perform gene ontology (GO) analysis for non-model organisms. Specifically, we will run through GOseq analysis in R, focusing on how to perform this for organisms that <strong>are not</strong> in the supported organisms list in <code>goseq()</code> and don’t have an annotation package in Bioconductor.</p>
-<p>This is an extension on our RNA-seq workshop, which covers GOseq analysis using the supported organism <em>Saccharomyces cerevisiae</em> <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html">(RNAseq workshop link here)</a>.</p>
+<p>In this workshop, we will cover how to perform gene ontology (GO) analysis for non-model organisms. Specifically, we will run through GOseq analysis in R, focusing on how to perform this for organisms that <strong>are not</strong> in the supported organisms list in <code>goseq()</code> and don’t have an annotation package in Bioconductor. You can check <a href="https://bioconductor.org/packages/release/BiocViews.html#___OrgDb">if your research organism is listed here.</a> If not, this workshop might be for you.</p>
+<p>This is an extension on our <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/">RNA-seq Data Analysis workshop</a>, which covers GOseq analysis using the supported organism <em>Saccharomyces cerevisiae</em> in the lesson on Functional analysis.</p>
 <section id="prerequisites" class="level2">
 <h2 class="anchored" data-anchor-id="prerequisites">Prerequisites</h2>
 <ul>
-<li>Have attended our <a href="https://genomicsaotearoa.github.io/Introduction-to-R/">Introduction to R</a> workshop or have equivalent experience.<br>
+<li>Have attended our <a href="https://genomicsaotearoa.github.io/BioinformaticsTrainingProgramme/portfolio.html#intro-r">Introduction to R</a> workshop or have equivalent experience.<br>
 </li>
-<li>Have attended our <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/">RNA-seq Data Analysis</a> workshop, or have previous experience with an RNA-seq workflow.</li>
+<li>Have attended our <a href="https://genomicsaotearoa.github.io/BioinformaticsTrainingProgramme/portfolio.html#rnaseq">RNA-seq Data Analysis</a> workshop, or have previous experience with an RNA-seq workflow.</li>
 </ul>
 <section id="set-up" class="level3">
 <h3 class="anchored" data-anchor-id="set-up">Set-up</h3>
@@ -588,7 +588,7 @@ How do I get gene ontologies?
 <section id="gene-lengths" class="level4">
 <h4 class="anchored" data-anchor-id="gene-lengths">4. <strong>Gene lengths</strong></h4>
 <p>📌💡 Make either a <strong>dataframe</strong> or <strong>tab delimited text file</strong> with two columns that maps gene identifiers to gene lengths (in bp)</p>
-<p>The gene identifier should match the identifiers used in the DGE list and background genes. The gene length is in base pairs (bp) and should be whole numbers (no decimal places). You should have an entry for every gene in your genome (or more specifically, every gene for which reads can be mapped in your RNA-seq alignment <em>i.e.,</em> every gene represented in your count matrix). Whether you have a tab delimited text file or a dataframe in R, it should look something like this:</p>
+<p>The gene identifier should match the identifiers used in the DGE list and background genes. The gene length is in base pairs (bp) and should be whole numbers (no decimal places). You should have an entry for every gene in your genome (or more specifically, every gene for which reads could be mapped to in your RNA-seq alignment <em>i.e.,</em> every gene represented in your count matrix). Whether you have a tab delimited text file or a dataframe in R, it should look something like this:</p>
 <pre><code>GeneID          Length
 LOC117820358    822
 LOC117813751    23247
