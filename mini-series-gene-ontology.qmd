@@ -249,19 +249,18 @@ LOC117818116	GO:0005198,GO:0005198,GO:0045095,GO:0045104
 ...             ...
 ```
 
-If your data is a text file, you should read it into R as a dataframe. The first row should be the header. `read_tsv()` from `readr` by default treats the first row as the header.  If you use `read_delim` from `utils` you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).
+If your data is a text file, you should read it into R as a dataframe. The first row should be the header.  If you use `read.delim` from `utils` you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).
 
 Example code:
 ```{r}
 #| eval: false
 
-geneOntologies <- read_tsv("geneOntologies.txt")
 geneOntologies <- read.delim("geneOntologies.txt", header = TRUE, sep = "\t")
 
 ```
 
 
-::: {.callout-note collapse="true"}
+::: {.callout-note collapse="false"}
 # How do I get gene ontologies?
 
 
@@ -306,18 +305,17 @@ twist3	        6717
 ...             ...
 ```
 
-If your data is a text file, you should read it into R as a dataframe. The first row should be the header. `read_tsv()` from `readr` by default treats the first row as the header.  If you use `read_delim` from `utils` you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).
+If your data is a text file, you should read it into R as a dataframe. The first row should be the header. If you use `read.delim` from `utils` you can specify header is true (or false if you have no header) and the separator is tab (or alternate delimiter).
 
 Example code:
 ```{r}
 #| eval: false
 
-geneLengths <- read_tsv("geneLengths.txt")
 geneLengths <- read.delim("geneLengths.txt", header = TRUE, sep = "\t")
 
 ```
 
-::: {.callout-note collapse="true"}
+::: {.callout-note collapse="false"}
 # How do I get gene lengths?
 
 Getting gene lengths sounds straightforward, but it depends on how you define the length of a gene — and there are several reasonable definitions that give different answers.
@@ -417,7 +415,7 @@ head(geneOntologies)
 We need to do some pre-analysis processing. First the gene ontologies need to be reformatted into a list. 
 
 ```{r}
-# Generate GO mapping structure, final object splitgoannot list ----
+# Generate GO mapping structure, final object splitgoannot list 
 geneOntologies[geneOntologies == "."] <- NA #change all dots to NAs
 splitgoannot <-  strsplit(geneOntologies[,2], split=',')
 names(splitgoannot) <-  as.vector(geneOntologies[,1])
@@ -427,7 +425,7 @@ The splitgoannot object is a large list. You can check the structure of it by ru
 Next we need to turn our gene lengths into a named vector.
 
 ```{r}
-# Load in gene lengths, final object length.vector is a named vector  ----
+# Load in gene lengths, final object length.vector is a named vector  
 # note - lengths must be whole numbers, use as.integer(round(genelengths$Length)) if you have decimal places.
 length.vector <- setNames(geneLengths$Length, geneLengths$GeneID)
 length(length.vector)
@@ -439,6 +437,9 @@ We will now cull the length.vector to only contain the genes that are in our bac
 ```{r}
 # Cull length.vector that don't show up in the background gene list. 
 length.vector <-  length.vector[names(length.vector) %in% background]  
+
+# Force length.vector gene names to be in the same order as the background - important!
+length.vector <- length.vector[background]
 
 #test - should be TRUE 
 length(length.vector) == length(background)
@@ -644,7 +645,7 @@ goout_MT_UP_over |>
   coord_flip() +
   scale_fill_gradient(low = "steelblue", high = "firebrick") +
   scale_y_continuous(expand = c(0, 0)) + # Removes extra padding
-  labs(title="Over-represented GO terms for genes upregulated in MT, vs F",x = "GO Term", y = "GeneRatio", fill = "-log10(p-value)") + 
+  labs(title="Over-represented GO terms for genes up in MT, vs F",x = "GO Term", y = "GeneRatio", fill = "-log10(p-value)") + 
   theme_classic()
 ```
 
@@ -739,3 +740,42 @@ If you really want to use tools designed for supported organisms, it is possible
 - [Further plotting examples using `clusterProfiler`](https://yulab-smu.top/biomedical-knowledge-mining-book/enrichplot.html). 
 - [GOSemSim](https://bioconductor.org/packages/release/bioc/html/GOSemSim.html) package for semantic similarity computation.    
 
+
+
+
+::: {.callout-note collapse="true"}
+# Alternate approaches
+
+1. Find orthologues of your species genes to a related species that does have an OrgDb. Once you have matched one-to-one the gene IDs, you can use the OrgDb species gene IDs in place of your own gene IDs and run the standard goseq pipeline using the supported organism. 
+
+Caveats:  
+
+- Gene lengths may not be accurate   
+- You lose genes with no orthologues, less of a problem for a very closely related species.  
+
+You can also use your own gene lengths, but use the annotations from the supported organism. 
+
+Example code:
+
+```{r}
+#| eval: false 
+
+# Standard pipeline but with custom gene lengths
+# Use case: your gene IDs match a supported org, but you want your own lengths
+
+library(goseq)
+library(org.Sc.sgd.db)
+
+data.pwf <- nullp(DEgenes  = DE.vector,        # binary named vector using supported org gene IDs
+                  bias.data = length.vector)   # your custom lengths
+
+go_output <- goseq(pwf    = data.pwf, 
+                   genome = "sacCer1",          # supported org genome
+                   id     = "ensGene",          # supported org gene ID type
+                   gene2cat = NULL)             # NULL = fetch GO terms automatically
+``` 
+
+2. Use `biomaRt` to find orthologues, which can query Ensembl for ortholog mappings between species. 
+
+
+:::
