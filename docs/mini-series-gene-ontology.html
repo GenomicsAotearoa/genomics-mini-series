@@ -754,19 +754,24 @@ The code for option 2 this should look something like this:
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># last test - DE.vector should have the same number of genes as the length.vector now.</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># last two tests - DE.vector should have the same number of genes as the length.vector now and the gene names should be in the same order in both. </span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="co"># If you do not get two TRUEs - go back and debug. </span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">identical</span>(<span class="fu">names</span>(length.vector), <span class="fu">names</span>(DE.vector))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 <p>Now we are ready to run the two step GOseq analysis! in the <code>nullp()</code> function, the object <code>DE.vector</code>, used for the <code>DEgenes</code> argument is the same as we’d have made if we ran this analysis using a supported organism, but the <code>bias.data</code> argument differs here (and we also don’t specify which genome and gene ID type we are using, as we would if we were using a supported organism!). The argument <code>gene2cat</code> in <code>goseq()</code> is where we input our custom gene ontology mapping file, which is also different to how we’d run this if we were using a supported organism.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install("goseq")</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run PWF for length bias correction</span></span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install("goseq")</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run PWF for length bias correction</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in pcls(G): initial point very close to some inequality constraints</code></pre>
 </div>
@@ -777,23 +782,23 @@ The code for option 2 this should look something like this:
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run GOseq </span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run GOseq </span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="processing-the-goseq-results" class="level3">
 <h3 class="anchored" data-anchor-id="processing-the-goseq-results">Processing the GOseq results</h3>
 <p>The go_output object is a dataframe that contains all the GO terms that were tested, but is not filtered to only show significant results. The columns <code>over_represented_pvalue</code> and <code>under_represented_pvalue</code> contain the p-values for over-representation and under-representation of each GO term, respectively. We can filter the go_output dataframe to only show significant results based on a chosen significance threshold.</p>
 <p>In this specific example, we were investigating genes upregulated in mid-transitioning (MT) gonads compared to female gonads (F) and so our output file names reflect this.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Limit output to significant results</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>GOSEQ_SIGNIFICANCE_THRESHOLD <span class="ot">=</span> <span class="fl">0.05</span></span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Limit output to significant results</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>GOSEQ_SIGNIFICANCE_THRESHOLD <span class="ot">=</span> <span class="fl">0.05</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_UP_vs_F_goseq.tsv"</span>)</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_UP, <span class="at">file=</span><span class="st">"MT_UP_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_UP_vs_F_goseq.tsv"</span>)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_UP, <span class="at">file=</span><span class="st">"MT_UP_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We have run through GOseq now for one comparison, which is MT UP vs F, but we havent looked at genes downregulated in MT (MT DOWN vs F).</p>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -817,28 +822,28 @@ Run through the pipeline again for MT DOWN vs F
 <strong>remake</strong> go_output</p>
 <p>Let’s remove those to be sure we re-create them with our new data!</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(DE.vector)</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(data.pwf)</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(go_output)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(DE.vector)</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(data.pwf)</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(go_output)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Run through pipeline again with MT_DOWN</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span> background  <span class="sc">%in%</span>  genes_MT_DOWN</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span> background  <span class="sc">%in%</span>  genes_MT_DOWN</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span>  DE.vector <span class="sc">*</span> <span class="dv">1</span> </span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(DE.vector) <span class="ot">&lt;-</span>  background</span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test again- should still be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>DE.vector <span class="ot">&lt;-</span>  DE.vector <span class="sc">*</span> <span class="dv">1</span> </span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(DE.vector) <span class="ot">&lt;-</span>  background</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(genes_MT_DOWN) <span class="do">## test again- should still be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(DE.vector) <span class="sc">==</span> <span class="fu">length</span>(length.vector) <span class="do">## test - should be TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes=</span>DE.vector, <span class="at">bias.data=</span>length.vector)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in pcls(G): initial point very close to some inequality constraints</code></pre>
 </div>
@@ -849,13 +854,13 @@ Run through the pipeline again for MT DOWN vs F
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_DOWN <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(data.pwf, <span class="at">gene2cat =</span> splitgoannot)</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_DOWN <span class="ot">&lt;-</span>  go_output[go_output<span class="sc">$</span>over_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD <span class="sc">|</span> go_output<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;=</span> GOSEQ_SIGNIFICANCE_THRESHOLD,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_goseq.tsv"</span>)</span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_DOWN, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write output to tsv files </span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_goseq.tsv"</span>)</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(go_output.SIG.MT_DOWN, <span class="at">file=</span><span class="st">"MT_DOWN_vs_F_sig0.05_goseq.tsv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -878,47 +883,47 @@ Run through the pipeline again for MT DOWN vs F
 <p>We’re going to need a new column Gene Ratio for plotting later, so we will generate that now before we split the data into over and under-represented. The Gene Ratio is the number of DE genes in the GO term divided by the total number of genes in that GO term. This is the proportion of DE genes with that GO term <em>e.g.,</em> a Gene ratio of 0.5 means that 50% of the genes in that GO term are DE.</p>
 <p>For today, we’ll do this for upregulated genes only.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span> go_output.SIG.MT_UP <span class="sc">|&gt;</span></span>
-<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GeneRatio =</span> numDEInCat <span class="sc">/</span> numInCat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>go_output.SIG.MT_UP <span class="ot">&lt;-</span> go_output.SIG.MT_UP <span class="sc">|&gt;</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GeneRatio =</span> numDEInCat <span class="sc">/</span> numInCat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Split into over and under-represented GO terms for upregulated genes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over  <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>over_represented_pvalue  <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_under <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over  <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>over_represented_pvalue  <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_under <span class="ot">&lt;-</span> go_output.SIG.MT_UP[go_output.SIG.MT_UP<span class="sc">$</span>under_represented_pvalue <span class="sc">&lt;</span> GOSEQ_SIGNIFICANCE_THRESHOLD, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test - should be TRUE</span></span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over) <span class="sc">+</span> <span class="fu">nrow</span>(goout_MT_UP_under) <span class="sc">==</span> <span class="fu">nrow</span>(go_output.SIG.MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test - should be TRUE</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over) <span class="sc">+</span> <span class="fu">nrow</span>(goout_MT_UP_under) <span class="sc">==</span> <span class="fu">nrow</span>(go_output.SIG.MT_UP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 <p>There are often less under-represented GO terms than over-represented; we can check how many GOs are in each df with:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over)</span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_under)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_over)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(goout_MT_UP_under)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="plot-data" class="level3">
 <h3 class="anchored" data-anchor-id="plot-data">Plot data</h3>
 <p>Lastly, let’s create a bubble plot to represent the top 10 over-represented GO terms for upregulated genes in MT vs F. We will use the GeneRatio column we generated above for the x-axis, and we will colour the bubbles by the -log10 of the p-value, which is a common way to visualise p-values in GO analysis. Using a negative log scales very small p-values (most significant) and larger pvalues on a visually more manageable scale, and means that the bigger the number the more significant (here, small p-values become higher numbers and are coloured red). We’ll also scale the size of the bubbles by the number of DE genes in that GO term, so that GO terms with more DE genes are larger bubbles.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over <span class="sc">|&gt;</span></span>
-<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(ontology)) <span class="sc">|&gt;</span></span>
-<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(over_represented_pvalue, <span class="at">n =</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
-<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> GeneRatio,</span>
-<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> <span class="fu">reorder</span>(<span class="fu">str_wrap</span>(term, <span class="at">width =</span> <span class="dv">35</span>), GeneRatio),</span>
-<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> numDEInCat,</span>
-<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">colour =</span> <span class="sc">-</span><span class="fu">log10</span>(over_represented_pvalue))) <span class="sc">+</span></span>
-<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_gradient</span>(<span class="at">low =</span> <span class="st">"steelblue"</span>, <span class="at">high =</span> <span class="st">"firebrick"</span>,</span>
-<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>                        <span class="at">name =</span> <span class="st">"-log10(p-value)"</span>) <span class="sc">+</span></span>
-<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_continuous</span>(<span class="at">name =</span> <span class="st">"DE gene count"</span>, <span class="at">range =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">10</span>)) <span class="sc">+</span></span>
-<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Over-represented GO terms for upregulated genes in MT, vs F"</span>,</span>
-<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Gene Ratio"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over <span class="sc">|&gt;</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(ontology)) <span class="sc">|&gt;</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(over_represented_pvalue, <span class="at">n =</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> GeneRatio,</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> <span class="fu">reorder</span>(<span class="fu">str_wrap</span>(term, <span class="at">width =</span> <span class="dv">35</span>), GeneRatio),</span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> numDEInCat,</span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">colour =</span> <span class="sc">-</span><span class="fu">log10</span>(over_represented_pvalue))) <span class="sc">+</span></span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_gradient</span>(<span class="at">low =</span> <span class="st">"steelblue"</span>, <span class="at">high =</span> <span class="st">"firebrick"</span>,</span>
+<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a>                        <span class="at">name =</span> <span class="st">"-log10(p-value)"</span>) <span class="sc">+</span></span>
+<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_continuous</span>(<span class="at">name =</span> <span class="st">"DE gene count"</span>, <span class="at">range =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">10</span>)) <span class="sc">+</span></span>
+<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Over-represented GO terms for upregulated genes in MT, vs F"</span>,</span>
+<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Gene Ratio"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb59-14"><a href="#cb59-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -943,18 +948,18 @@ Example barplot of GOs vs GeneRatio
 <div id="callout-7" class="callout-7-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over <span class="sc">|&gt;</span> </span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(ontology)) <span class="sc">|&gt;</span> </span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(over_represented_pvalue, <span class="at">n=</span><span class="dv">5</span>) <span class="sc">|&gt;</span> <span class="co">#top N by pvalue eg top 10 or 20. Note slice_min = smallest pvalue, slice_max = largest pvalue</span></span>
-<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(<span class="fu">str_wrap</span>(term, <span class="at">width =</span> <span class="dv">18</span>), GeneRatio), </span>
-<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> GeneRatio, <span class="at">fill =</span> <span class="sc">-</span><span class="fu">log10</span>(over_represented_pvalue))) <span class="sc">+</span></span>
-<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
-<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"steelblue"</span>, <span class="at">high =</span> <span class="st">"firebrick"</span>) <span class="sc">+</span></span>
-<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span> <span class="co"># Removes extra padding</span></span>
-<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Over-represented GO terms for genes up in MT, vs F"</span>,<span class="at">x =</span> <span class="st">"GO Term"</span>, <span class="at">y =</span> <span class="st">"GeneRatio"</span>, <span class="at">fill =</span> <span class="st">"-log10(p-value)"</span>) <span class="sc">+</span> </span>
-<span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>goout_MT_UP_over <span class="sc">|&gt;</span> </span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(ontology)) <span class="sc">|&gt;</span> </span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(over_represented_pvalue, <span class="at">n=</span><span class="dv">5</span>) <span class="sc">|&gt;</span> <span class="co">#top N by pvalue eg top 10 or 20. Note slice_min = smallest pvalue, slice_max = largest pvalue</span></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(<span class="fu">str_wrap</span>(term, <span class="at">width =</span> <span class="dv">18</span>), GeneRatio), </span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> GeneRatio, <span class="at">fill =</span> <span class="sc">-</span><span class="fu">log10</span>(over_represented_pvalue))) <span class="sc">+</span></span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"steelblue"</span>, <span class="at">high =</span> <span class="st">"firebrick"</span>) <span class="sc">+</span></span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span> <span class="co"># Removes extra padding</span></span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Over-represented GO terms for genes up in MT, vs F"</span>,<span class="at">x =</span> <span class="st">"GO Term"</span>, <span class="at">y =</span> <span class="st">"GeneRatio"</span>, <span class="at">fill =</span> <span class="st">"-log10(p-value)"</span>) <span class="sc">+</span> </span>
+<span id="cb60-12"><a href="#cb60-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -980,26 +985,26 @@ Example GO enrichment map plot
 <div id="callout-8" class="callout-8-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install(c("clusterProfiler", "enrichplot", "GO.db"))</span></span>
-<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(clusterProfiler)</span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(enrichplot)</span>
-<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: reformat your geneOntologies into long format </span></span>
-<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a><span class="co"># clusterProfiler's enricher() needs a two-column dataframe:</span></span>
-<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   col 1 = GO term  (TERM2GENE format: term first, gene second)</span></span>
-<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   col 2 = gene ID</span></span>
-<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a><span class="co"># You already have geneOntologies loaded (GeneID | GOs), so we just</span></span>
-<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a><span class="co"># split the comma-separated GOs and pivot to long format.</span></span>
-<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a>term2gene <span class="ot">&lt;-</span> geneOntologies <span class="sc">|&gt;</span></span>
-<span id="cb59-14"><a href="#cb59-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(GOs <span class="sc">!=</span> <span class="st">"."</span>) <span class="sc">|&gt;</span>                          <span class="co"># drop genes with no annotation</span></span>
-<span id="cb59-15"><a href="#cb59-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(GOs, <span class="at">sep =</span> <span class="st">","</span>) <span class="sc">|&gt;</span>               <span class="co"># one row per GO term</span></span>
-<span id="cb59-16"><a href="#cb59-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GOs =</span> <span class="fu">trimws</span>(GOs)) <span class="sc">|&gt;</span>                   <span class="co"># tidy any whitespace</span></span>
-<span id="cb59-17"><a href="#cb59-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GOs, Symbol)                             <span class="co"># term first, gene second</span></span>
-<span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a><span class="co"># (enricher expects TERM2GENE with term in col 1, gene in col 2)</span></span>
-<span id="cb59-19"><a href="#cb59-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(term2gene)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BiocManager::install(c("clusterProfiler", "enrichplot", "GO.db"))</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(clusterProfiler)</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(enrichplot)</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: reformat your geneOntologies into long format </span></span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a><span class="co"># clusterProfiler's enricher() needs a two-column dataframe:</span></span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   col 1 = GO term  (TERM2GENE format: term first, gene second)</span></span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   col 2 = gene ID</span></span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a><span class="co"># You already have geneOntologies loaded (GeneID | GOs), so we just</span></span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a><span class="co"># split the comma-separated GOs and pivot to long format.</span></span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a>term2gene <span class="ot">&lt;-</span> geneOntologies <span class="sc">|&gt;</span></span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(GOs <span class="sc">!=</span> <span class="st">"."</span>) <span class="sc">|&gt;</span>                          <span class="co"># drop genes with no annotation</span></span>
+<span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(GOs, <span class="at">sep =</span> <span class="st">","</span>) <span class="sc">|&gt;</span>               <span class="co"># one row per GO term</span></span>
+<span id="cb61-16"><a href="#cb61-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GOs =</span> <span class="fu">trimws</span>(GOs)) <span class="sc">|&gt;</span>                   <span class="co"># tidy any whitespace</span></span>
+<span id="cb61-17"><a href="#cb61-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GOs, Symbol)                             <span class="co"># term first, gene second</span></span>
+<span id="cb61-18"><a href="#cb61-18" aria-hidden="true" tabindex="-1"></a><span class="co"># (enricher expects TERM2GENE with term in col 1, gene in col 2)</span></span>
+<span id="cb61-19"><a href="#cb61-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-20"><a href="#cb61-20" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(term2gene)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 2
   GOs        Symbol      
@@ -1011,14 +1016,14 @@ Example GO enrichment map plot
 5 GO:0045095 LOC117815572
 6 GO:0045095 LOC117815572</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: download and generate term2name variable </span></span>
-<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We need the GO term and the name e.g., GO:0000001 and 'mitochondrion inheritance' for plotting</span></span>
-<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GO.db)</span>
-<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>term2name <span class="ot">&lt;-</span> AnnotationDbi<span class="sc">::</span><span class="fu">select</span>(GO.db, <span class="at">keys =</span> <span class="fu">keys</span>(GO.db), <span class="at">columns =</span> <span class="fu">c</span>(<span class="st">"GOID"</span>, <span class="st">"TERM"</span>))</span>
-<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>term2name <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">select</span>(term2name, GOID, TERM) </span>
-<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(term2name)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: download and generate term2name variable </span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We need the GO term and the name e.g., GO:0000001 and 'mitochondrion inheritance' for plotting</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GO.db)</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>term2name <span class="ot">&lt;-</span> AnnotationDbi<span class="sc">::</span><span class="fu">select</span>(GO.db, <span class="at">keys =</span> <span class="fu">keys</span>(GO.db), <span class="at">columns =</span> <span class="fu">c</span>(<span class="st">"GOID"</span>, <span class="st">"TERM"</span>))</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>term2name <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">select</span>(term2name, GOID, TERM) </span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(term2name)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        GOID                                                     TERM
 1 GO:0000001                                mitochondrion inheritance
@@ -1028,35 +1033,35 @@ Example GO enrichment map plot
 5 GO:0000010                heptaprenyl diphosphate synthase activity
 6 GO:0000011                                      vacuole inheritance</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3: run enricher() </span></span>
-<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="co"># universe = your background gene list (same as goseq)</span></span>
-<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a><span class="co"># gene     = your DE gene list (same as goseq)</span></span>
-<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>cp_result <span class="ot">&lt;-</span> <span class="fu">enricher</span>(</span>
-<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene          =</span> genes_MT_UP,</span>
-<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">universe      =</span> background,</span>
-<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">TERM2GENE     =</span> term2gene,</span>
-<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">TERM2NAME     =</span> term2name,</span>
-<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">pvalueCutoff  =</span> <span class="fl">0.05</span>,</span>
-<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">qvalueCutoff  =</span> <span class="fl">0.05</span>,</span>
-<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">"BH"</span></span>
-<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb63-15"><a href="#cb63-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-16"><a href="#cb63-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-17"><a href="#cb63-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-18"><a href="#cb63-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 4: calculate semantic similarity</span></span>
-<span id="cb63-19"><a href="#cb63-19" aria-hidden="true" tabindex="-1"></a><span class="co"># emapplot requires the pairwise similarity between terms to be calculated first. This creates a similarity matrix. </span></span>
-<span id="cb63-20"><a href="#cb63-20" aria-hidden="true" tabindex="-1"></a>cp_result_sim <span class="ot">&lt;-</span> <span class="fu">pairwise_termsim</span>(cp_result)</span>
-<span id="cb63-21"><a href="#cb63-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-22"><a href="#cb63-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-23"><a href="#cb63-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Step5: Visualisation</span></span>
-<span id="cb63-24"><a href="#cb63-24" aria-hidden="true" tabindex="-1"></a><span class="fu">emapplot</span>(cp_result_sim, </span>
-<span id="cb63-25"><a href="#cb63-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">showCategory =</span> <span class="dv">30</span>,         <span class="co"># change how many GOs on plot</span></span>
-<span id="cb63-26"><a href="#cb63-26" aria-hidden="true" tabindex="-1"></a>         <span class="at">size_category =</span> <span class="dv">1</span>,         <span class="co"># change size of bubbles</span></span>
-<span id="cb63-27"><a href="#cb63-27" aria-hidden="true" tabindex="-1"></a>         <span class="at">node_label_size =</span> <span class="dv">3</span>,       <span class="co"># change GO font size</span></span>
-<span id="cb63-28"><a href="#cb63-28" aria-hidden="true" tabindex="-1"></a>         ) <span class="sc">+</span>    </span>
-<span id="cb63-29"><a href="#cb63-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"GO term enrichment map: upregulated genes in MT, vs F"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3: run enricher() </span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="co"># universe = your background gene list (same as goseq)</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="co"># gene     = your DE gene list (same as goseq)</span></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>cp_result <span class="ot">&lt;-</span> <span class="fu">enricher</span>(</span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene          =</span> genes_MT_UP,</span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">universe      =</span> background,</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">TERM2GENE     =</span> term2gene,</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">TERM2NAME     =</span> term2name,</span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">pvalueCutoff  =</span> <span class="fl">0.05</span>,</span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">qvalueCutoff  =</span> <span class="fl">0.05</span>,</span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">pAdjustMethod =</span> <span class="st">"BH"</span></span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 4: calculate semantic similarity</span></span>
+<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a><span class="co"># emapplot requires the pairwise similarity between terms to be calculated first. This creates a similarity matrix. </span></span>
+<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a>cp_result_sim <span class="ot">&lt;-</span> <span class="fu">pairwise_termsim</span>(cp_result)</span>
+<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-22"><a href="#cb65-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-23"><a href="#cb65-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Step5: Visualisation</span></span>
+<span id="cb65-24"><a href="#cb65-24" aria-hidden="true" tabindex="-1"></a><span class="fu">emapplot</span>(cp_result_sim, </span>
+<span id="cb65-25"><a href="#cb65-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">showCategory =</span> <span class="dv">30</span>,         <span class="co"># change how many GOs on plot</span></span>
+<span id="cb65-26"><a href="#cb65-26" aria-hidden="true" tabindex="-1"></a>         <span class="at">size_category =</span> <span class="dv">1</span>,         <span class="co"># change size of bubbles</span></span>
+<span id="cb65-27"><a href="#cb65-27" aria-hidden="true" tabindex="-1"></a>         <span class="at">node_label_size =</span> <span class="dv">3</span>,       <span class="co"># change GO font size</span></span>
+<span id="cb65-28"><a href="#cb65-28" aria-hidden="true" tabindex="-1"></a>         ) <span class="sc">+</span>    </span>
+<span id="cb65-29"><a href="#cb65-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"GO term enrichment map: upregulated genes in MT, vs F"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -1109,19 +1114,19 @@ Alternate approaches
 <p>You can also use your own gene lengths, but use the annotations from the supported organism.</p>
 <p>Example code:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard pipeline but with custom gene lengths</span></span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use case: your gene IDs match a supported org, but you want your own lengths</span></span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(org.Sc.sgd.db)</span>
-<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes  =</span> DE.vector,        <span class="co"># binary named vector using supported org gene IDs</span></span>
-<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">bias.data =</span> length.vector)   <span class="co"># your custom lengths</span></span>
-<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(<span class="at">pwf    =</span> data.pwf, </span>
-<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">genome =</span> <span class="st">"sacCer1"</span>,          <span class="co"># supported org genome</span></span>
-<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>                   <span class="at">id     =</span> <span class="st">"ensGene"</span>,          <span class="co"># supported org gene ID type</span></span>
-<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>                   <span class="at">gene2cat =</span> <span class="cn">NULL</span>)             <span class="co"># NULL = fetch GO terms automatically</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard pipeline but with custom gene lengths</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use case: your gene IDs match a supported org, but you want your own lengths</span></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(goseq)</span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(org.Sc.sgd.db)</span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>data.pwf <span class="ot">&lt;-</span> <span class="fu">nullp</span>(<span class="at">DEgenes  =</span> DE.vector,        <span class="co"># binary named vector using supported org gene IDs</span></span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">bias.data =</span> length.vector)   <span class="co"># your custom lengths</span></span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>go_output <span class="ot">&lt;-</span> <span class="fu">goseq</span>(<span class="at">pwf    =</span> data.pwf, </span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">genome =</span> <span class="st">"sacCer1"</span>,          <span class="co"># supported org genome</span></span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>                   <span class="at">id     =</span> <span class="st">"ensGene"</span>,          <span class="co"># supported org gene ID type</span></span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>                   <span class="at">gene2cat =</span> <span class="cn">NULL</span>)             <span class="co"># NULL = fetch GO terms automatically</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ol start="2" type="1">
 <li>Use <code>biomaRt</code> to find orthologues, which can query Ensembl for ortholog mappings between species.</li>
@@ -1237,6 +1242,11 @@ Alternate approaches
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
         }
       }
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {

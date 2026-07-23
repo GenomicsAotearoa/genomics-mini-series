@@ -465,8 +465,10 @@ names(DE.vector) <-  background
 ## test again- should still be TRUE
 sum(DE.vector) == length(genes_MT_UP)
 
-# last test - DE.vector should have the same number of genes as the length.vector now.
+# last two tests - DE.vector should have the same number of genes as the length.vector now and the gene names should be in the same order in both. 
+# If you do not get two TRUEs - go back and debug. 
 length(DE.vector) == length(length.vector) 
+identical(names(length.vector), names(DE.vector))
 ```
 
 Now we are ready to run the two step GOseq analysis! in the `nullp()` function, the object `DE.vector`, used for the `DEgenes` argument is the same as we'd have made if we ran this analysis using a supported organism, but the `bias.data` argument differs here (and we also don't specify which genome and gene ID type we are using, as we would if we were using a supported organism!). The argument `gene2cat` in `goseq()` is where we input our custom gene ontology mapping file, which is also different to how we'd run this if we were using a supported organism.    

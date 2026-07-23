@@ -12,6 +12,7 @@ website:
         href: mini-series-gene-ontology.qmd
 format:
   html:
+    link-external-newwindow: true
     theme:
       light: default
       dark: darkly
