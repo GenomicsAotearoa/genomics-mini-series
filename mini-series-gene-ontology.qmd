@@ -276,6 +276,77 @@ The gaf file looks like this. You will need to take the 'Symbol' column and the 
 The final gene ontology file should look like this (tsv format):
 ![](figures/gos_tsv.png)
 
+
+::: {.callout-note collapse="true"}
+# How to process the `.gaf` file...
+
+There are many ways in shell or R you could process this file. You will need to:
+
+1. Remove the header lines
+2. Pull out the Symbol column and GO_ID column 
+3. Add any missing gene IDs that are not in the gaf file, but are in your counts file (any genes that can be mapped to, but do not have GO annotations).
+4. Collapse GO IDs into a single string for each gene ID. 
+
+Here is one way you could acheive this. 
+
+In shell to start:
+
+```bash
+# download your file with wget
+wget "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/path/to/gene_ontology.gaf.gz"
+
+# unzip
+gunzip *.gaf.gz
+
+# remove header
+cat gene_ontology.gaf | grep -v '^!' > noheadergaf.txt
+
+# grab only the third and fifth columns (Symbol and GO_ID) 
+awk -F'\t' '{print $3"\t"$5}' noheadergaf.txt > symbol_GOIDs.txt
+```
+
+Now move to R:
+
+```{r}
+#| eval: false 
+
+# read in data
+GO_data_raw <- read_tsv("symbol_GOIDs.txt", col_names = c("Symbol", "GO_ID"))
+
+# grab just the Gene IDs column from your counts object - this is a single column dataframe with one row for every mappable gene 
+all_genes <- as.data.frame(counts[,1]) 
+colnames(all_genes) <-  "Symbol" #rename column to symbol to match the data_raw
+
+# Join together your dataframe that has ALL the gene IDs, with the dataframe that has gene IDs matched to GOs. 
+# Not all genes will have a GO ID, but we need them in the final dataframe with "NA" in the GO_ID column. 
+all_genes_GOs <- left_join(all_genes, GO_data_raw, by = "Symbol") 
+
+# Check - this number should be the same number as how many genes are in your raw counts matrix
+length(unique(all_genes_GOs$Symbol))
+
+# Finally, collapse all GO_IDs for one gene into a single string
+geneOntologies <- all_genes_GOs %>%
+  group_by(Symbol) %>%
+  summarise(GO_ID = if (all(is.na(GO_ID))) NA_character_ 
+            else paste(unique(na.omit(GO_ID)), collapse = ",")) |> 
+  as.data.frame()
+
+# Final checks - the number of genes in your final geneOntologies object should be the same number of genes in your counts and the same number of unique genes in your uncollapsed dataframe
+
+nrow(geneOntologies) == length(unique(all_genes_GOs$Symbol))
+# should print TRUE
+
+nrow(geneOntologies) == nrow(counts)
+# should print TRUE
+
+```
+
+
+
+
+:::
+
+
 ***Option 2 (harder):*** Derive GOs from BLAST and Pfam annotations. This is more work, but may be necessary if you don't have a `.gaf` file available for your organism. You can use tools like `InterProScan` to annotate your genes with GO terms based on their sequence similarity to known proteins. BLAST2GO is another tool (commercial - need a license) that can be used to assign GO terms to genes based on BLAST results (*i.e.,* BLASTing against organisms that *do* have GO annotations, usually from the evolutionarily nearest model organism!). This approach may be more time-consuming and may not yield as comprehensive GO annotations as using a `.gaf` file, but it can be a useful alternative for non-model organisms. If you generate Pfam annotations through another pipeline (*e.g.,* through hmmer) you may also need to download the latest [PFAM2GO mapping file](https://current.geneontology.org/ontology/external2go/pfam2go) to retrieve GO terms for your genes based on their Pfam domains.
 
 
