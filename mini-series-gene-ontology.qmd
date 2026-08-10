@@ -192,9 +192,9 @@ str(genes_MT_DOWN)
 
 📌💡 Make a **character vector** of all gene IDs that you want to use as a background for your GO analysis. 
 
-You need to think carefully about what you want to use as your background gene list. Generating it is fairly straight forward, but it has implications for the analysis. Read more on how overrepresentation analysis works and how the background gene list is used in the analysis [here in the functional analysis section of the RNA-seq workshop](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html). 
+You need to think carefully about what you want to use as your background gene list. Generating it is fairly straight forward, but it has implications for the analysis. Read more on how overrepresentation analysis works and how the background gene list is used in the analysis [here in the functional analysis section of the RNA-seq workshop](https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html) and in this paper on ["Ten common mistakes that could ruin your enrichment analysis"](https://doi.org/10.1371/journal.pcbi.1014122) by Bora, McKenzie and Ziemann, 2026.  All genes that you are testing (*i.e.,* all your DEGs) must be in the background gene list. The simplest option for generating this list is to use all genes that are *expressed* in your dataset as the background. 
 
-For now, we will use all genes that are expressed in our dataset as the background. We will take these gene IDs by pulling all the rownames out of the `dds` object:
+We will take these gene IDs by pulling all the rownames out of the `dds` object:
 
 > Note: earlier when dds was created, low count genes were filtered out, which removed genes not expressed (*i.e.,* zero counts across all samples) and genes very lowly expressed (*i.e.,* less than 10 counts in at least 2 samples).
 
@@ -211,9 +211,9 @@ saveRDS(background, file = "data/background.rds")
 ::: {.callout-tip collapse="true"}
 # Checks and food for thought
 
-What does *expressed* really mean in this context? If one of our genes in our dataset had one read mapping to it in one sample, and all other samples had zero, would you consider this an expressed gene? Most of us probably would agree this does not seem sufficient. Deciding on a read count threshold is up to you as a researcher. In this example above, we used a threshold of 10 counts in at least 2 samples. So in this way, our background of expressed genes will be less than the total number of genes in the genome, but more than the number of DE genes.
+What does *expressed* really mean in this context? If one of our genes in our dataset had one read mapping to it in one sample, and all other samples had zero, would you consider this an expressed gene? Most of us probably would agree this does not seem sufficient. Deciding on a read count threshold is up to you as a researcher. In this example above, we used a threshold of 10 counts in at least 2 samples. So in this way, our background list of expressed genes will be less than the total number of genes in the genome, but more than the number of DE genes.
 
-We can confirm that there are less genes in the background then there are in the whole list of genes in the genome by running:
+We can confirm that there are less genes in the expressed gene list (background) then there are in the whole list of genes in the genome by counting the number of genes in our background vector and in our original counts table (all genes in the genome), by running:
 
 ```{r}
 length(background)
@@ -341,13 +341,14 @@ nrow(geneOntologies) == nrow(counts)
 
 ```
 
-
+> Note: Don't worry about duplicate GO terms in the final collapsed string for a gene. GOseq removes duplicates during the `goseq(... gene2cat = splitgoannot)` step. The `enricher()` function also removes duplicates during the `enricher(... TERM2GENE = term2gene)` step. 
 
 
 :::
 
 
-***Option 2 (harder):*** Derive GOs from BLAST and Pfam annotations. This is more work, but may be necessary if you don't have a `.gaf` file available for your organism. You can use tools like `InterProScan` to annotate your genes with GO terms based on their sequence similarity to known proteins. BLAST2GO is another tool (commercial - need a license) that can be used to assign GO terms to genes based on BLAST results (*i.e.,* BLASTing against organisms that *do* have GO annotations, usually from the evolutionarily nearest model organism!). This approach may be more time-consuming and may not yield as comprehensive GO annotations as using a `.gaf` file, but it can be a useful alternative for non-model organisms. If you generate Pfam annotations through another pipeline (*e.g.,* through hmmer) you may also need to download the latest [PFAM2GO mapping file](https://current.geneontology.org/ontology/external2go/pfam2go) to retrieve GO terms for your genes based on their Pfam domains.
+***Option 2 (harder):*** Derive GOs from BLAST and Pfam annotations. This is more work, but may be necessary if you don't have a `.gaf` file available for your organism. You can use tools like `InterProScan` to annotate your genes with GO terms based on their sequence similarity to known proteins. BLAST2GO is another tool (commercial - need a license) that can be used to assign GO terms to genes based on BLAST results (*i.e.,* BLASTing against organisms that *do* have GO annotations, usually from the evolutionarily nearest model organism!). You can do this manually without BLAST2GO too. You would need to BLAST your genes against a database of genes with known GO annotations, and then use the results to assign GO terms to your genes based on the best hits. If you generate Pfam annotations through another pipeline (*e.g.,* through hmmer) you can download the latest [PFAM2GO mapping file](https://current.geneontology.org/ontology/external2go/pfam2go) to retrieve GO terms for your genes based on their Pfam domains. These approaches are more time-consuming, but are a useful alternative for non-model organisms or for less annotated genomes. 
+*De novo* RNAseq methods frequently use the [Trinity](https://github.com/trinityrnaseq/trinityrnaseq/wiki) - [Trinotate](https://github.com/Trinotate/Trinotate/wiki) pipeline to assemble and annotate (unfortunately, as of March 2024 there is no longer ongoing development and support for these tools.) 
 
 
 :::
@@ -389,7 +390,7 @@ geneLengths <- read.delim("geneLengths.txt", header = TRUE, sep = "\t")
 ::: {.callout-note collapse="false"}
 # How do I get gene lengths?
 
-Getting gene lengths sounds straightforward, but it depends on how you define the length of a gene — and there are several reasonable definitions that give different answers.
+Getting gene lengths sounds straightforward, but it depends on how you define the length of a gene -- and there are several reasonable definitions that give different answers.
 
 One approach is to use the **genomic span** of a gene: the distance from the first base to the last base across the gene body. This is easy to extract from a GFF/GTF file but includes introns, which are not actually transcribed into mature mRNA.
 

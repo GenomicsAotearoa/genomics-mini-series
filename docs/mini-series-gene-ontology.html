@@ -502,8 +502,8 @@ Code used to generate dds object
 <section id="background-genes" class="level4">
 <h4 class="anchored" data-anchor-id="background-genes">2. <strong>Background genes</strong>:</h4>
 <p>📌💡 Make a <strong>character vector</strong> of all gene IDs that you want to use as a background for your GO analysis.</p>
-<p>You need to think carefully about what you want to use as your background gene list. Generating it is fairly straight forward, but it has implications for the analysis. Read more on how overrepresentation analysis works and how the background gene list is used in the analysis <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html">here in the functional analysis section of the RNA-seq workshop</a>.</p>
-<p>For now, we will use all genes that are expressed in our dataset as the background. We will take these gene IDs by pulling all the rownames out of the <code>dds</code> object:</p>
+<p>You need to think carefully about what you want to use as your background gene list. Generating it is fairly straight forward, but it has implications for the analysis. Read more on how overrepresentation analysis works and how the background gene list is used in the analysis <a href="https://genomicsaotearoa.github.io/RNA-seq-data-analysis-workflow/episode_5.html">here in the functional analysis section of the RNA-seq workshop</a> and in this paper on <a href="https://doi.org/10.1371/journal.pcbi.1014122">“Ten common mistakes that could ruin your enrichment analysis”</a> by Bora, McKenzie and Ziemann, 2026. All genes that you are testing (<em>i.e.,</em> all your DEGs) must be in the background gene list. The simplest option for generating this list is to use all genes that are <em>expressed</em> in your dataset as the background.</p>
+<p>We will take these gene IDs by pulling all the rownames out of the <code>dds</code> object:</p>
 <blockquote class="blockquote">
 <p>Note: earlier when dds was created, low count genes were filtered out, which removed genes not expressed (<em>i.e.,</em> zero counts across all samples) and genes very lowly expressed (<em>i.e.,</em> less than 10 counts in at least 2 samples).</p>
 </blockquote>
@@ -526,8 +526,8 @@ Checks and food for thought
 </div>
 <div id="callout-2" class="callout-2-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>What does <em>expressed</em> really mean in this context? If one of our genes in our dataset had one read mapping to it in one sample, and all other samples had zero, would you consider this an expressed gene? Most of us probably would agree this does not seem sufficient. Deciding on a read count threshold is up to you as a researcher. In this example above, we used a threshold of 10 counts in at least 2 samples. So in this way, our background of expressed genes will be less than the total number of genes in the genome, but more than the number of DE genes.</p>
-<p>We can confirm that there are less genes in the background then there are in the whole list of genes in the genome by running:</p>
+<p>What does <em>expressed</em> really mean in this context? If one of our genes in our dataset had one read mapping to it in one sample, and all other samples had zero, would you consider this an expressed gene? Most of us probably would agree this does not seem sufficient. Deciding on a read count threshold is up to you as a researcher. In this example above, we used a threshold of 10 counts in at least 2 samples. So in this way, our background list of expressed genes will be less than the total number of genes in the genome, but more than the number of DE genes.</p>
+<p>We can confirm that there are less genes in the expressed gene list (background) then there are in the whole list of genes in the genome by counting the number of genes in our background vector and in our original counts table (all genes in the genome), by running:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(background)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -642,10 +642,13 @@ How to process the <code>.gaf</code> file…
 <span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(geneOntologies) <span class="sc">==</span> <span class="fu">nrow</span>(counts)</span>
 <span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="co"># should print TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<blockquote class="blockquote">
+<p>Note: Don’t worry about duplicate GO terms in the final collapsed string for a gene. GOseq removes duplicates during the <code>goseq(... gene2cat = splitgoannot)</code> step. The <code>enricher()</code> function also removes duplicates during the <code>enricher(... TERM2GENE = term2gene)</code> step.</p>
+</blockquote>
 </div>
 </div>
 </div>
-<p><strong><em>Option 2 (harder):</em></strong> Derive GOs from BLAST and Pfam annotations. This is more work, but may be necessary if you don’t have a <code>.gaf</code> file available for your organism. You can use tools like <code>InterProScan</code> to annotate your genes with GO terms based on their sequence similarity to known proteins. BLAST2GO is another tool (commercial - need a license) that can be used to assign GO terms to genes based on BLAST results (<em>i.e.,</em> BLASTing against organisms that <em>do</em> have GO annotations, usually from the evolutionarily nearest model organism!). This approach may be more time-consuming and may not yield as comprehensive GO annotations as using a <code>.gaf</code> file, but it can be a useful alternative for non-model organisms. If you generate Pfam annotations through another pipeline (<em>e.g.,</em> through hmmer) you may also need to download the latest <a href="https://current.geneontology.org/ontology/external2go/pfam2go">PFAM2GO mapping file</a> to retrieve GO terms for your genes based on their Pfam domains.</p>
+<p><strong><em>Option 2 (harder):</em></strong> Derive GOs from BLAST and Pfam annotations. This is more work, but may be necessary if you don’t have a <code>.gaf</code> file available for your organism. You can use tools like <code>InterProScan</code> to annotate your genes with GO terms based on their sequence similarity to known proteins. BLAST2GO is another tool (commercial - need a license) that can be used to assign GO terms to genes based on BLAST results (<em>i.e.,</em> BLASTing against organisms that <em>do</em> have GO annotations, usually from the evolutionarily nearest model organism!). You can do this manually without BLAST2GO too. You would need to BLAST your genes against a database of genes with known GO annotations, and then use the results to assign GO terms to your genes based on the best hits. If you generate Pfam annotations through another pipeline (<em>e.g.,</em> through hmmer) you can download the latest <a href="https://current.geneontology.org/ontology/external2go/pfam2go">PFAM2GO mapping file</a> to retrieve GO terms for your genes based on their Pfam domains. These approaches are more time-consuming, but are a useful alternative for non-model organisms or for less annotated genomes. <em>De novo</em> RNAseq methods frequently use the <a href="https://github.com/trinityrnaseq/trinityrnaseq/wiki">Trinity</a> - <a href="https://github.com/Trinotate/Trinotate/wiki">Trinotate</a> pipeline to assemble and annotate (unfortunately, as of March 2024 there is no longer ongoing development and support for these tools.)</p>
 </div>
 </div>
 </div>
@@ -684,7 +687,7 @@ How do I get gene lengths?
 </div>
 <div id="callout-6" class="callout-6-contents callout-collapse collapse show">
 <div class="callout-body-container callout-body">
-<p>Getting gene lengths sounds straightforward, but it depends on how you define the length of a gene — and there are several reasonable definitions that give different answers.</p>
+<p>Getting gene lengths sounds straightforward, but it depends on how you define the length of a gene – and there are several reasonable definitions that give different answers.</p>
 <p>One approach is to use the <strong>genomic span</strong> of a gene: the distance from the first base to the last base across the gene body. This is easy to extract from a GFF/GTF file but includes introns, which are not actually transcribed into mature mRNA.</p>
 <p>A more accurate definition for RNA-seq purposes is the <strong>union exon length</strong>: the total number of base pairs covered by exons, after merging overlapping exons from different isoforms of the same gene. This better reflects the sequence that reads actually map to.</p>
 <p>Ideally, make a file/object that has gene lengths for <em>all genes in your genome</em> – you will filter out the genes you need for analysis later.</p>
